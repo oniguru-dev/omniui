@@ -1,0 +1,32 @@
+[jsx]
+jsx = "preact"
+jsxImportSource = "preact"
+runtime = "automatic"
+
+[build]
+jsx = "preact"
+jsxFactory = "h"
+jsxFragment = "Fragment"
+
+[run]
+jsx = "preact"
+jsxFactory = "h"
+jsxFragment = "Fragment"
+
+[install.scopes]
+"react" = "preact/compat"
+"react-dom" = "preact/compat"
+
+[serve.static]
+plugins = [
+  "@/plugins/router.plugin.ts",
+  "@/plugins/rsc.plugin.ts",
+  "@/plugins/directives.plugin.ts",
+  "@/plugins/unocss.plugin.ts",
+]
+
+[target]
+target = "ESNext"
+module = "ESNext"
+moduleDetection = "force"
+moduleResolution = "bundler"

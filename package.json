@@ -1,0 +1,35 @@
+{
+  "name": "omniui",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "omniui": "src/cli.ts"
+  },
+  "_moduleAliases": {
+    "@": "src"
+  },
+  "devDependencies": {
+    "@elysiajs/static": "^1.4.10",
+    "@types/bun": "latest",
+    "elysia": "^1.4.28",
+    "lottie-web": "^5.13.0",
+    "preact": "^10.29.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "dev": "bun --watch src/server",
+    "start": "bun dist/src/server",
+    "bundle": "bun run src/scripts/build.script"
+  },
+  "dependencies": {
+    "@iconify-json/solar": "^1.2.5",
+    "fflate": "^0.8.2",
+    "lightningcss": "^1.32.0",
+    "marked": "^18.0.5",
+    "unocss": "^66.7.0",
+    "wouter-preact": "^3.10.0"
+  }
+}

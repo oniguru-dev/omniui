@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "installCommand": "bun install",
+  "buildCommand": "bun bundle",
+  "outputDirectory": "dist",
+  "headers": [
+    {
+      "source": "/assets/fonts/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" },
+        { "key": "Content-Type", "value": "font/woff2" }
+      ]
+    }
+  ],
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/assets/(.*)", "destination": "/public/assets/$1" },
+    { "source": "/chunk-(.*).js", "destination": "/app/chunk-$1.js" },
+    { "source": "/(.*)", "destination": "/app/index.html" }
+  ],
+  "functions": {
+    "api/**/*.ts": {
+      "maxDuration": 10
+    }
+  }
+}
