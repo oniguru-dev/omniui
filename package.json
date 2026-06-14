@@ -1,35 +1,41 @@
 {
   "name": "omniui",
+  "version": "1.0.0",
+  "description": "Lightweight UI framework for Bun with file routing, server components, and UnoCSS",
   "module": "src/index.ts",
   "type": "module",
-  "private": true,
   "bin": {
     "omniui": "src/cli.ts"
   },
-  "_moduleAliases": {
-    "@": "src"
-  },
-  "devDependencies": {
-    "@elysiajs/static": "^1.4.10",
-    "@types/bun": "latest",
-    "elysia": "^1.4.28",
-    "lottie-web": "^5.13.0",
-    "preact": "^10.29.2"
-  },
-  "peerDependencies": {
-    "typescript": "^5.9.3"
-  },
+  "main": "src/index.ts",
+  "types": "types.d.ts",
+  "files": [
+    "src/",
+    "public/",
+    "template/",
+    "types.d.ts",
+    "bunfig.toml"
+  ],
   "scripts": {
     "dev": "bun --watch src/server",
-    "start": "bun dist/src/server",
-    "bundle": "bun run src/scripts/build.script"
+    "start": "bun src/server.ts",
+    "build": "bun run src/scripts/build.script.ts"
   },
   "dependencies": {
+    "@elysiajs/static": "^1.4.10",
     "@iconify-json/solar": "^1.2.5",
+    "elysia": "^1.4.28",
     "fflate": "^0.8.2",
     "lightningcss": "^1.32.0",
+    "lottie-web": "^5.13.0",
     "marked": "^18.0.5",
+    "preact": "^10.29.2",
     "unocss": "^66.7.0",
     "wouter-preact": "^3.10.0"
-  }
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "keywords": ["bun", "framework", "elysia", "preact", "unocss", "ssr", "routing"],
+  "license": "MIT"
 }

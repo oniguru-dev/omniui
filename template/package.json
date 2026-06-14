@@ -1,0 +1,12 @@
+{
+  "name": "my-omniui-app",
+  "private": true,
+  "scripts": {
+    "dev": "omniui dev",
+    "build": "omniui build",
+    "start": "omniui start"
+  },
+  "dependencies": {
+    "omniui": "latest"
+  }
+}
