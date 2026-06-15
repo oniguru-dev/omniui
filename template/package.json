@@ -7,6 +7,8 @@
     "start": "omniui start"
   },
   "dependencies": {
-    "@omnixui/omniui": "@omnixui/omniui"
+    "@iconify-json/solar": "^1.2.5",
+    "@omnixui/omniui": "^1.0.0",
+    "marked": "^18.0.5"
   }
 }

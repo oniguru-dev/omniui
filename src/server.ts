@@ -78,8 +78,9 @@ export async function main() {
   const api = join(cwd, 'app', 'api.routes.ts');
 
   if (await Bun.file(api).exists()) {
-    const { default: plugin } = await import(api);
-    app.use(plugin); // use api routes as plugin
+    const mod = await import(api);
+    const plugin = mod.default || mod.apiRoutes;
+    if (plugin) app.use(plugin);
   }
 
   // routes
@@ -87,7 +88,7 @@ export async function main() {
   let opts;
 
   opts = {
-    assets: `${srcRoot}/public`, prefix: '', maxAge: 31536000,
+    assets: join(cwd, 'public'), prefix: '', maxAge: 31536000,
     directive: 'must-revalidate', alwaysStatic: true
   } as const;
 
@@ -97,7 +98,7 @@ export async function main() {
   );
 
   opts = {
-    assets: `${srcRoot}/app`, prefix: '**',
+    assets: join(cwd, 'app'), prefix: '**',
     indexHTML: true, bunFullstack: true
   } as const;
 
