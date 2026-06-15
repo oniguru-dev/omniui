@@ -1,6 +1,6 @@
 {
   "name": "@omnixui/omniui",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Lightweight UI framework for Bun with file routing, server components, and UnoCSS",
   "module": "src/index.ts",
   "type": "module",
@@ -9,6 +9,10 @@
   },
   "main": "src/index.ts",
   "types": "types.d.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./plugin": "./src/plugin.ts"
+  },
   "files": [
     "src/",
     "public/",

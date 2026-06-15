@@ -1,5 +1,5 @@
 {
-  "name": "my-omniui-app",
+  "name": "omniui-app",
   "private": true,
   "scripts": {
     "dev": "omniui dev",
@@ -7,6 +7,6 @@
     "start": "omniui start"
   },
   "dependencies": {
-    "omniui": "softy-oniguru/omniui"
+    "@omnixui/omniui": "@omnixui/omniui"
   }
 }

@@ -5,8 +5,8 @@ const USE_CLIENT = "'use client'";
 
 async function getDirective(filePath: string): Promise<'server' | 'client' | null> {
   try {
-    const content = await Bun.file(filePath).text();
-    const directive = content.split('\n')[0]?.trim() || '';
+    const content = await Bun.file(filePath).text(); // content of the file
+    const directive = content.split('\n')[0]?.trim().replace(/;$/, '') || '';
 
     if (directive === USE_SERVER || directive === '"use server"') return 'server';
     if (directive === USE_CLIENT || directive === '"use client"') return 'client';

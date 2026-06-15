@@ -11,12 +11,12 @@ export const plugin: BunPlugin = {
     build.onLoad({ filter: /.*/, namespace: "virtual-routes" }, async () => {
       const pageGlob = new Glob("**/page.{ts,tsx}");
       const layoutGlob = new Glob("**/layout.{ts,tsx}");
-      const imports: string[] = [];
-      const layouts: string[] = [];
+      const imports: string[] = []; const layouts: string[] = [];
 
       // Scan page files
-      for await (const file of pageGlob.scan({ cwd: join(process.cwd(), "app"), onlyFiles: true })) {
-        if (file.includes("_")) continue;
+      for await (const file of pageGlob.scan({
+        cwd: join(process.cwd(), "app"), onlyFiles: true
+      })) { if (file.includes("_")) continue;
 
         let route = ("/" + file.replace(/\\/g, "/")).toLowerCase();
         route = route.replace(/\/?page\.(ts|tsx)$/, "");
@@ -31,8 +31,9 @@ export const plugin: BunPlugin = {
       }
 
       // Scan layout files
-      for await (const file of layoutGlob.scan({ cwd: join(process.cwd(), "app"), onlyFiles: true })) {
-        if (file.includes("_")) continue;
+      for await (const file of layoutGlob.scan({
+        cwd: join(process.cwd(), "app"), onlyFiles: true
+      })) { if (file.includes("_")) continue;
 
         let route = ("/" + file.replace(/\\/g, "/")).toLowerCase();
         route = route.replace(/\/?layout\.(ts|tsx)$/, "");

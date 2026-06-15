@@ -1,0 +1,14 @@
+[jsx]
+jsx = "preact"
+jsxImportSource = "preact"
+runtime = "automatic"
+
+[run]
+jsx = "preact"
+jsxFactory = "h"
+jsxFragment = "Fragment"
+
+[serve.static]
+plugins = [
+  "./node_modules/@omnixui/omniui/src/plugin.ts",
+]

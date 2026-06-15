@@ -4,51 +4,38 @@
  */
 
 import type { BunPlugin } from 'bun';
+import { join } from 'node:path';
 import { transform } from 'lightningcss';
 import { createGenerator } from '@unocss/core';
-import { join } from 'path';
-import { existsSync, readFileSync } from 'fs';
-import { defineConfig } from 'unocss';
-import { presetWind4, presetIcons, presetTypography } from 'unocss';
 
-function loadUnoConfig() {
+async function getConfig() {
   const configPath = join(process.cwd(), 'uno.config.ts');
-  if (!existsSync(configPath)) {
-    return defineConfig({
-      presets: [presetWind4(), presetIcons(), presetTypography()],
-      theme: { colors: { accent: "#8040ff" } },
-    });
-  }
-  // Default config - user should configure their own
-  return defineConfig({
-    presets: [presetWind4(), presetIcons(), presetTypography()],
-    theme: { colors: { accent: "#8040ff" } },
-  });
+
+  try {
+    const mod = await import(configPath);
+    return mod.default || mod;
+  } catch { return {}; }
 }
 
-const generator = await createGenerator(loadUnoConfig());
-
-const generator = await createGenerator(unocfg);
+const config = await getConfig();
+const generator = await createGenerator(config);
 let cache: Promise<string> | null = null;
 
-function process() {
+function compile() {
   if (cache) return cache; cache = (async () => {
-    const appDir = join(process.cwd(), 'app');
-    const pubDir = join(process.cwd(), 'public/components');
     const globs = [
-      new Bun.Glob('**/*.{html,tsx,jsx,js,ts}'),
-      new Bun.Glob('**/*.{html,tsx,jsx,js,ts}')
+      new Bun.Glob('app/**/*.{html,tsx,jsx,js,ts}'),
+      new Bun.Glob('public/components/**/*.{html,tsx,jsx,js,ts}')
     ];
 
     let sources = '';
-    for (const [glob, dir] of [[globs[0], appDir], [globs[1], pubDir]]) {
-      for await (const file of glob.scan({ cwd: dir }))
-        sources += await Bun.file(join(dir, file)).text() + '\n';
+    for (const glob of globs) {
+      for await (const file of glob.scan())
+        sources += await Bun.file(file).text() + '\n';
     }
 
     const { css } = await generator.generate(sources);
-    setTimeout(() => { cache = null }, 50);
-    return css || '';
+    setTimeout(() => { cache = null }, 50); return css || '';
   })(); return cache;
 }
 
@@ -59,7 +46,7 @@ function minify(str: string) { return str
 
 export const plugin: BunPlugin = {
   name: 'bun-plugin-unocss', async setup(build) {
-    const isDev = !build.config.minify;
+    const isDev = !build.config?.minify;
 
     build.onResolve({ filter: /^virtual:uno\.css/ }, (args) => {
       return { path: args.path, namespace: 'unocss' };
@@ -68,7 +55,7 @@ export const plugin: BunPlugin = {
     build.onLoad({ filter: /.*/, namespace: 'unocss' }, async () => {
       const css = transform({
         filename: 'virtual:uno.css', minify: !isDev,
-        code: new Uint8Array(Buffer.from( await process() )),
+        code: new Uint8Array(Buffer.from( await compile() )),
       })?.code?.toString() || '';
 
       return { contents: minify(`
@@ -100,7 +87,7 @@ if (typeof document !== 'undefined') {
     }
   }
 }
-      `), loader: 'js' };
+      `.trim()), loader: 'js' };
     });
 
     isDev && build.onLoad({ filter: /\.(tsx|jsx)$/ }, async (args) => {
@@ -108,8 +95,8 @@ if (typeof document !== 'undefined') {
       const nocache = `\nimport "virtual:uno.css";`;
 
       return {
-        contents: content + nocache,
-        loader: args.path.endsWith('.tsx') ? 'tsx' : 'jsx'
+        contents: content + nocache, loader: args.path
+          .endsWith('.tsx') ? 'tsx' : 'jsx' // no-cache
       };
     });
   }

@@ -19,10 +19,7 @@ jsxFragment = "Fragment"
 
 [serve.static]
 plugins = [
-  "@/plugins/router.plugin.ts",
-  "@/plugins/rsc.plugin.ts",
-  "@/plugins/directives.plugin.ts",
-  "@/plugins/unocss.plugin.ts",
+  "./src/plugin.ts",
 ]
 
 [target]

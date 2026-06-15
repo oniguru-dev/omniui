@@ -1,0 +1,22 @@
+/**
+ * omniui — Lightweight UI Framework
+ * Built with Preact & UnoCSS | @omnidev
+ * 
+ * Configuration file. 
+ */
+
+const config = {
+  baseUrl: "http://localhost:8080",
+  port: 8080,                     // listen on port :8080
+  upnp: false,                    // upnp port forwarding
+  local: false,                   // local network access
+  browser: true,                  // open browser window
+
+  robots: { // robots.txt | auto-generated
+    crawler: 2,             // rate-limit (default: 2)
+    disallow: [ "/api/*" ], // robots.txt
+    ignore: [ "/api/*" ],   // sitemap.xml
+  },
+};
+
+export default config;

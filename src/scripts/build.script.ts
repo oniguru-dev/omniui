@@ -4,10 +4,11 @@
  */
 
 import fs from "node:fs/promises";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "url";
-import { existsSync, readFileSync } from "fs";
+import { join } from "node:path";
+import { readFileSync } from "fs";
 import { red, yellow, green } from "colorette";
+
+import { pkgRoot, resolve } from '../libs/paths';
 
 // plugins
 import { plugin as router } from '../plugins/router.plugin';
@@ -18,19 +19,23 @@ import { plugin as unocss } from '../plugins/unocss.plugin';
 import { newSitemap } from "../libs/sitemap";
 import { newRobots } from "../libs/robots";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 const cwd = process.cwd();
+const PKG_DIR = pkgRoot();
 
-function loadConfig() {
-  const configPath = join(cwd, 'omniui.config.ts');
-  if (!existsSync(configPath)) return { port: 8080, local: false, browser: true, upnp: false, baseUrl: 'http://localhost:8080', robots: { crawler: 2, disallow: ['/api/*'], ignore: ['/api/*'] } };
-  const content = readFileSync(configPath, 'utf-8');
+function getConfig() {
+  const path = resolve('omniui.config.ts');
+  const content = readFileSync(path, 'utf-8');
   const match = content.match(/const\s+config\s*=\s*(\{[\s\S]*?\});/);
-  if (!match) return { port: 8080, local: false, browser: true, upnp: false, baseUrl: 'http://localhost:8080', robots: { crawler: 2, disallow: ['/api/*'], ignore: ['/api/*'] } };
-  try { return eval('(' + match[1] + ')'); } catch { return { port: 8080, local: false, browser: true, upnp: false, baseUrl: 'http://localhost:8080', robots: { crawler: 2, disallow: ['/api/*'], ignore: ['/api/*'] } }; }
+  if (!match) return {};
+
+  try {
+    return eval('(' + match[1] + ')');
+  } catch {
+    return {};
+  }
 }
 
-const config = loadConfig();
+const config = getConfig();
 
 const argv = Bun.argv.slice(2);
 const idx = argv.findIndex(x => x === "--ignore" || x === "-i");
@@ -42,22 +47,24 @@ const doGIFski    = !args.includes("gif");
 const doVideo     = !args.includes("video");
 const doAudio     = !args.includes("audio");
 
-const BIN_DIR = join(import.meta.dir, '..', '..', 'bin');
+const BIN_DIR = join(PKG_DIR, 'bin');
 
-async function resolve(name: string): Promise<string | null> {
+async function resolveBinary(name: string): Promise<string | null> {
   const ext = process.platform === 'win32' ? '.exe' : '';
   const candidates = ext ? [`${name}.exe`, name] : [name];
+
   for (const file of candidates) {
     const path = join(BIN_DIR, file);
     try { await fs.access(path); return path; } catch {}
   }
+
   return null;
 }
 
 const missing = new Set<string>();
 
 async function requireBinary(name: string): Promise<string | null> {
-  const bin = await resolve(name);
+  const bin = await resolveBinary(name);
   if (!bin) { missing.add(name); return null; }
   return bin;
 }
@@ -69,27 +76,36 @@ try {
   await fs.rm(join(cwd, 'dist'), { recursive: true, force: true });
 
   console.log(yellow("⚡ Building frontend... [1/2]"));
+
   const client = await Bun.build({
     entrypoints: [join(cwd, 'app/index.html')], outdir: join(cwd, 'dist/app'),
     splitting: true, minify: { whitespace: true, syntax: true },
     target: 'browser', format: 'esm', plugins: [unocss, router, directives, rsc],
   })
-  if (!client.success) throw new AggregateError(client.logs, "❌ Client-side build failed");
+
+  if (!client.success) throw new AggregateError(
+    client.logs, "❌ Client-side build failed"
+  );
 
   console.log(yellow("⚡ Building backend... [2/2]"));
+
   const server = await Bun.build({
     entrypoints: [join(cwd, 'src/server.ts')], outdir: join(cwd, 'dist/src'),
-    minify: { whitespace: true, syntax: true },
-    target: 'bun', format: 'cjs',
+    minify: { whitespace: true, syntax: true }, target: 'bun', format: 'cjs',
     define: { "__bundle__": "true" },
   })
-  if (!server.success) throw new AggregateError(server.logs, "❌ Server-side build failed");
+
+  if (!server.success) throw new AggregateError(
+    server.logs, "❌ Server-side build failed"
+  );
 
   console.log("📂 Copying static assets...");
+
   for await (const file of new Bun.Glob('public/**/*').scan({ cwd }))
     await Bun.write(join(cwd, `dist/${file}`), Bun.file(join(cwd, file)));
 
   console.log("🎴 Optimizing assets...");
+
   const assets = join(cwd, "dist/public/assets");
   const io = { stdout: "inherit" as const, stderr: "inherit" as const };
   const tmp = join(cwd, "dist/tmp");
@@ -163,15 +179,25 @@ try {
   }
 
   console.log("📡 Generating SEO files...");
-  const routes: Array<{ route: string; type: 'static' | 'dynamic' }> = [];
 
-  for await (const file of new Bun.Glob("**/page.{ts,tsx}").scan({ cwd: join(cwd, "app"), onlyFiles: true })) {
+  const routes: Array<{
+    route: string;
+    type: 'static' | 'dynamic'
+  }> = [];
+
+  for await (const file of new Bun.Glob("**/page.{ts,tsx}")
+    .scan({ cwd: join(cwd, "app"), onlyFiles: true })
+  ) {
     if (file.includes("_")) continue;
+
     let route = "/" + file.replace(/\\/g, "/");
     route = route.replace(/\/?page\.(ts|tsx)$/, "");
-    if (route === "") route = "/";
+    if (route === "") route = "/"; // root page
     route = route.replace(/\[(.*?)\]/g, ":$1");
-    routes.push({ route, type: route.includes(":") ? "dynamic" : "static" });
+
+    routes.push({ route, type:
+      route.includes(":") ? "dynamic" : "static"
+    });
   }
 
   try {

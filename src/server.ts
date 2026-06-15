@@ -5,31 +5,34 @@
 
 import { Elysia } from 'elysia';
 import { staticPlugin } from '@elysiajs/static';
-import { apiRoutes } from './api.routes';
-import { join, dirname } from 'node:path';
+import { join } from 'node:path';
 import { networkInterfaces } from 'os';
-import { existsSync, readFileSync } from 'fs';
 
-const __dirname = join(dirname(Bun.main), '..');
-const cwd = process.cwd();
+import { cwd, pkgRoot, srcRoot } from './libs/paths';
 
-function loadConfig() {
-  const configPath = join(cwd, 'omniui.config.ts');
-  if (!existsSync(configPath)) return { port: 8080, local: false, browser: true, upnp: false, baseUrl: 'http://localhost:8080', robots: { crawler: 2, disallow: ['/api/*'], ignore: ['/api/*'] } };
-  // Simple config loader - reads and evals the config
-  const content = readFileSync(configPath, 'utf-8');
-  const match = content.match(/const\s+config\s*=\s*(\{[\s\S]*?\});/);
-  if (!match) return { port: 8080, local: false, browser: true, upnp: false, baseUrl: 'http://localhost:8080', robots: { crawler: 2, disallow: ['/api/*'], ignore: ['/api/*'] } };
-  try { return eval('(' + match[1] + ')'); } catch { return { port: 8080, local: false, browser: true, upnp: false, baseUrl: 'http://localhost:8080', robots: { crawler: 2, disallow: ['/api/*'], ignore: ['/api/*'] } }; }
+const PKG_DIR = pkgRoot();
+
+async function resolve(name: string): Promise<string> {
+  const user = join(cwd, name);
+  if (await Bun.file(user).exists()) return user;
+  const pkg = join(PKG_DIR, name);
+  return await Bun.file(pkg).exists() ? pkg : user;
 }
-
-const config = loadConfig();
 
 declare const __bundle__: boolean | undefined;
 const BUNDLE = typeof __bundle__ !== "undefined"
   ? __bundle__ : process.env.NODE_ENV === "bundle";
 
+async function loadConfig() {
+  const path = await resolve('omniui.config.ts');
+  const content = await Bun.file(path).text();
+  const match = content.match(/const\s+config\s*=\s*(\{[\s\S]*?\});/);
+  if (!match) return {};
+  try { return eval('(' + match[1] + ')'); } catch { return {}; }
+}
+
 export async function main() {
+  const config = await loadConfig();
   const app = new Elysia({ serve: {
     routes: { "/api": false, "/api/*": false }
   },
@@ -45,8 +48,7 @@ export async function main() {
       };
 
       const resolvedPath = modulePath.includes(':/') || modulePath.startsWith('/')
-        ? modulePath
-        : join(cwd, modulePath);
+        ? modulePath : join(srcRoot, '..', modulePath); // resolve relative path
       const mod = await import(resolvedPath);
 
       if (typeof mod[functionName] !== 'function')
@@ -72,35 +74,47 @@ export async function main() {
     } catch {}
   })
 
-  .use(apiRoutes);
+  // Load user's api routes
+  const api = join(cwd, 'app', 'api.routes.ts');
+
+  if (await Bun.file(api).exists()) {
+    const { default: plugin } = await import(api);
+    app.use(plugin); // use api routes as plugin
+  }
 
   // routes
 
   let opts;
 
   opts = {
-    assets: `${cwd}/public`, prefix: '', maxAge: 31536000,
+    assets: `${srcRoot}/public`, prefix: '', maxAge: 31536000,
     directive: 'must-revalidate', alwaysStatic: true
   } as const;
-  app.use(!BUNDLE ? await staticPlugin(opts) : staticPlugin(opts));
+
+  app.use(!BUNDLE
+    ? await staticPlugin(opts)
+    : staticPlugin(opts)
+  );
 
   opts = {
-    assets: `${cwd}/app`, prefix: '**',
+    assets: `${srcRoot}/app`, prefix: '**',
     indexHTML: true, bunFullstack: true
   } as const;
-  app.use(!BUNDLE ? await staticPlugin(opts) : staticPlugin(opts));
 
-  return app;
+  app.use(!BUNDLE
+    ? await staticPlugin(opts)
+    : staticPlugin(opts)
+  );
+
+  return { app, config };
 }
 
 // ── CLI ──
 
 function getLocalIP(): string | null {
-  for (const name of Object.keys(networkInterfaces())) {
-    for (const iface of networkInterfaces()[name] ?? []) {
+  for (const name of Object.keys(networkInterfaces()))
+    for (const iface of networkInterfaces()[name] ?? [])
       if (iface.family === 'IPv4' && !iface.internal) return iface.address;
-    }
-  }
   return null;
 }
 
@@ -109,6 +123,7 @@ function openBrowser(url: string) {
     : process.platform === 'win32' ? 'start' : 'xdg-open';
   try { Bun.spawn([cmd, url]); } catch {}
 }
+
 
 function clearConsole() {
   process.stdout.write('\x1Bc');
@@ -146,42 +161,46 @@ function printHelp() {
 let localUrl = '';
 let networkUrl: string | null = null;
 let session: any = null;
+let config: any = {};
 
 async function startServer() {
-  if (session) { session.stop(); session = null; }
+  if (session) {
+    session.stop();
+    session = null;
+  };
 
-  const app = await main();
+  const { app, config } = await main();
   const port = config.port ?? 8080;
   const host = config.local ? '127.0.0.1' : '0.0.0.0';
 
   session = app.listen({ port, hostname: host });
   localUrl = `http://localhost:${port}`;
-  const networkIP = config.local ? null : getLocalIP();
-  networkUrl = networkIP ? `http://${networkIP}:${port}` : null;
+  const ip = config.local ? null : getLocalIP();
+  networkUrl = ip ? `http://${ip}:${port}` : null;
 
-  if (config.upnp && networkIP) { try {
+  if (config.upnp && ip) { try {
     const { execSync } = await import('child_process');
-    execSync(`netsh interface portproxy add v4tov4 listenport=${port} listenaddress=0.0.0.0 connectport=${port} connectaddress=${networkIP}`, { stdio: 'ignore' });
+    execSync(`netsh interface portproxy add v4tov4 listenport=${port} listenaddress=0.0.0.0 connectport=${port} connectaddress=${ip}`, { stdio: 'ignore' });
   } catch {} }
 
-  clearConsole();
-  printBanner(port, localUrl, networkUrl);
+  clearConsole(); printBanner(
+    port, localUrl, networkUrl
+  );
 
-  if (config.browser) setTimeout(() => openBrowser(localUrl), 500);
+  if (config.browser) setTimeout(
+    () => openBrowser(localUrl), 500
+  );
 }
 
 startServer().then(() => {
   if (!process.stdin.isTTY) return;
-  const stdin = process.stdin;
-  stdin.setRawMode(true);
-  stdin.resume();
-  stdin.setEncoding('utf-8');
-
-  stdin.on('data', (key: string) => {
+  process.stdin.setRawMode?.(true); process.stdin.resume(); // raw mode
+  process.stdin.setEncoding('utf-8'); process.stdin.on('data', (key: string) => {
     if (key === '\x03') {
       console.log(`\n  ${RED}✕${R}  Exiting server...\n`);
       process.exit(0);
     }
+
     switch (key) {
       case 'r':
         console.log(`\n  ${YELLOW}↻${R}  Restarting server...\n`);
