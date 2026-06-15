@@ -56,7 +56,9 @@ function readConfig(): Record<string, any> {
   const match = content.match(/const\s+config\s*=\s*(\{[\s\S]*?\});/);
   if (!match) return {};
 
-  try { return eval('(' + match[1] + ')'); } catch { return {}; }
+  try { return new Function(
+    'return (' + match[1] + ')'
+  )(); } catch { return {}; }
 }
 
 // ── create ──

@@ -41,7 +41,7 @@ export async function newSitemap(
   console.log('🗺️ Generating sitemap.xml...');
 
   if (!config?.baseUrl) {
-    console.error('❌ baseUrl is required in bertui.config.js for sitemap generation!');
+    console.error('❌ baseUrl is required in omniui.config.ts for sitemap generation!');
     console.error('   Add: baseUrl: "https://your-domain.com" to your config');
     throw new Error('Missing baseUrl in config - sitemap generation failed');
   }

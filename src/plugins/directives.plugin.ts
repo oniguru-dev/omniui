@@ -17,7 +17,7 @@ async function getDirective(filePath: string): Promise<'server' | 'client' | nul
   }
 }
 
-function generateProxy(path: string, exports: string[]): string {
+function generateProxy(path: string, exports: string[], hasDefaultExport: boolean): string {
   const imports = path.replace(/\\/g, '/');
   const proxies = exports.map(name => `
 export async function ${name}(...args) {
@@ -35,7 +35,23 @@ export async function ${name}(...args) {
   return data.result;
 }`).join('\n');
 
-  return proxies;
+  const defaultProxy = hasDefaultExport ? `
+export default async function(...args) {
+  const response = await fetch('/_bun/rsc', { method: 'POST',
+    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(
+      { module: '${imports}', function: 'default', args }
+    )
+  });
+
+  if (!response.ok) throw new Error(
+    \`RSC call failed: \${response.statusText}\`
+  );
+
+  const data = await response.json();
+  return data.result;
+}` : '';
+
+  return proxies + defaultProxy;
 }
 
 export const plugin: BunPlugin = {
@@ -52,7 +68,9 @@ export const plugin: BunPlugin = {
         regexp = /export\s+const\s+(\w+)\s*=/g; // regexp for const exports
         while ((match = regexp.exec(content)) !== null) exports.push(match[1]!);
 
-        const proxy = generateProxy(args.path, exports);
+        const hasDefaultExport = /export\s+default\s+(?:async\s+)?(?:function|class|\()/.test(content);
+
+        const proxy = generateProxy(args.path, exports, hasDefaultExport);
         return { contents: proxy, loader: "js" };
       }
 

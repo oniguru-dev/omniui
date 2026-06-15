@@ -34,3 +34,6 @@ public/assets/fonts/
 src/bin/
 data/*.sqlite
 expenses/
+
+# Roadmap
+STEPS.md

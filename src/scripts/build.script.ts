@@ -29,7 +29,7 @@ function getConfig() {
   if (!match) return {};
 
   try {
-    return eval('(' + match[1] + ')');
+    return new Function('return (' + match[1] + ')')();
   } catch {
     return {};
   }

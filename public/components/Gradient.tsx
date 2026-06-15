@@ -1,9 +1,9 @@
 /** @jsxImportSource preact */
-import { type JSX } from 'preact';
+import { type JSX, type ComponentChildren } from 'preact';
 import { useRef, useEffect } from 'preact/hooks';
 
 interface GradientProps {
-  children: any;
+  children: ComponentChildren;
   class?: string;
   target?: string;
 }

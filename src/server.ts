@@ -6,11 +6,13 @@
 import { Elysia } from 'elysia';
 import { staticPlugin } from '@elysiajs/static';
 import { join } from 'node:path';
+import { readFileSync } from 'fs';
 import { networkInterfaces } from 'os';
 
 import { cwd, pkgRoot, srcRoot } from './libs/paths';
 
 const PKG_DIR = pkgRoot();
+const VERSION = JSON.parse(readFileSync(join(PKG_DIR, 'package.json'), 'utf-8')).version;
 
 async function resolve(name: string): Promise<string> {
   const user = join(cwd, name);
@@ -28,7 +30,7 @@ async function loadConfig() {
   const content = await Bun.file(path).text();
   const match = content.match(/const\s+config\s*=\s*(\{[\s\S]*?\});/);
   if (!match) return {};
-  try { return eval('(' + match[1] + ')'); } catch { return {}; }
+  try { return new Function('return (' + match[1] + ')')(); } catch { return {}; }
 }
 
 export async function main() {
@@ -41,16 +43,33 @@ export async function main() {
     seed: { value: 'this.framework' }
   })
 
+  .onAfterHandle(({ response, set }) => {
+    set('X-Content-Type-Options', 'nosniff');
+    set('X-Frame-Options', 'DENY');
+    set('X-XSS-Protection', '1; mode=block');
+    set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  })
+
   .post('/_bun/rsc', async ({ body, status }) => {
     try {
       const { module: modulePath, function: functionName, args } = body as {
         module: string; function: string; args: any[];
       };
 
-      const resolvedPath = modulePath.includes(':/') || modulePath.startsWith('/')
-        ? modulePath : join(srcRoot, '..', modulePath); // resolve relative path
-      const mod = await import(resolvedPath);
+      if (!modulePath || typeof modulePath !== 'string')
+        return status(400, { error: 'Invalid module path' });
+      if (modulePath.includes('..') || modulePath.startsWith('/') || modulePath.includes(':'))
+        return status(400, { error: 'Invalid module path' });
 
+      const resolvedPath = join(process.cwd(), modulePath);
+      const appDir = join(process.cwd(), 'app');
+      if (!resolvedPath.startsWith(appDir))
+        return status(403, { error: 'Access denied' });
+
+      if (!functionName || !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(functionName))
+        return status(400, { error: 'Invalid function name' });
+
+      const mod = await import(resolvedPath);
       if (typeof mod[functionName] !== 'function')
         return status(400, { error: `Function '${functionName}' not found` });
 
@@ -58,20 +77,8 @@ export async function main() {
       return { result };
     } catch (err: any) {
       console.error('[RSC] Error:', err);
-      return status(500, { error: err.message || 'Internal server error' });
+      return status(500, { error: 'Internal server error' });
     }
-  })
-
-  .onBeforeHandle(async ({ request, path, status }) => {
-    if (path.startsWith('/api')) return;
-    try {
-      const file = join('./public', path);
-      if (await Bun.file(file).exists()) {
-        const referer = request.headers.get('referer');
-        const origin = request.headers.get('origin');
-        if (!referer && !origin) return status(403);
-      }
-    } catch {}
   })
 
   // Load user's api routes
@@ -79,8 +86,7 @@ export async function main() {
 
   if (await Bun.file(api).exists()) {
     const mod = await import(api);
-    const plugin = mod.default || mod.apiRoutes;
-    if (plugin) app.use(plugin);
+    if (mod.default) app.use(mod.default);
   }
 
   // routes
@@ -139,7 +145,7 @@ const GREEN = '\x1b[38;2;120;200;255m';
 
 function printBanner(port: number, local: string, network: string | null) {
   console.log(`
-  ${ACCENT}  Omni UI${R} ${DIM}v1.0.0${R}
+  ${ACCENT}  Omni UI${R} ${DIM}v${VERSION}${R}
 
   ${ACCENT}  →${R} Local:   ${ACCENT}${local}${R}${network ? `\n  ${ACCENT}  →${R} Network: ${ACCENT}${network}${R}` : ''}
   ${DIM}  press h to show help${R}

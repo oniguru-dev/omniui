@@ -47,6 +47,14 @@ renderer.table = function (token: any) {
 
 marked.use({ renderer });
 
+function sanitizeHtml(html: string): string {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+    .replace(/\son[a-z]+=(["'])(?:(?!\1).)*?\1/gi, ' ')
+    .replace(/\son[a-z]+=\S+/gi, '');
+}
+
 const PROSE = [
   'prose prose-invert max-w-none text-zinc-200',
   '[&_h1]:text-[48px] [&_h1]:font-bold [&_h1]:text-white [&_h1]:mb-5 [&_h1]:tracking-tight [&_h1]:leading-tight',
@@ -88,7 +96,7 @@ export default function Page({ params }: any) {
 
   const slug = params.slug || 'introduction';
   const doc = data.docs[slug];
-  const html = doc ? marked.parse(doc.content) as string : '';
+  const html = doc ? sanitizeHtml(marked.parse(doc.content) as string) : '';
 
   const meta = doc?.meta || {};
   const fmtDate = (d: string) => {

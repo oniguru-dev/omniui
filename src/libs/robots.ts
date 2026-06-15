@@ -16,7 +16,7 @@ type RobotsConfig = {
 export async function newRobots(config: RobotsConfig, output: string) {
   console.log('🕹 Generating robots.txt...');
   if (!config?.baseUrl) {
-    console.error('❌ baseUrl is required in bertui.config.js for robots.txt generation!');
+    console.error('❌ baseUrl is required in omniui.config.ts for robots.txt generation!');
     console.error('   Add: baseUrl: "https://your-domain.com" to your config');
     throw new Error('Missing baseUrl in config - robots.txt generation failed');
   }

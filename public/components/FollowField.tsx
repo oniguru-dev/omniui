@@ -1,11 +1,11 @@
 /** @jsxImportSource preact */
-import { type JSX } from 'preact';
+import { type JSX, type ComponentChildren } from 'preact';
 import { useRef, useEffect } from 'preact/hooks';
 
 interface FollowFieldProps {
   id?: string;
   class?: string;
-  children: any;
+  children: ComponentChildren;
 }
 
 interface ItemState {
