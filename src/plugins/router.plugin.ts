@@ -1,5 +1,6 @@
 import type { BunPlugin } from "bun";
 import { Glob } from "bun";
+import { join } from "path";
 
 export const plugin: BunPlugin = {
   name: "virtual-routes", async setup(build) {
@@ -14,7 +15,7 @@ export const plugin: BunPlugin = {
       const layouts: string[] = [];
 
       // Scan page files
-      for await (const file of pageGlob.scan({ cwd: "app", onlyFiles: true })) {
+      for await (const file of pageGlob.scan({ cwd: join(process.cwd(), "app"), onlyFiles: true })) {
         if (file.includes("_")) continue;
 
         let route = ("/" + file.replace(/\\/g, "/")).toLowerCase();
@@ -30,7 +31,7 @@ export const plugin: BunPlugin = {
       }
 
       // Scan layout files
-      for await (const file of layoutGlob.scan({ cwd: "app", onlyFiles: true })) {
+      for await (const file of layoutGlob.scan({ cwd: join(process.cwd(), "app"), onlyFiles: true })) {
         if (file.includes("_")) continue;
 
         let route = ("/" + file.replace(/\\/g, "/")).toLowerCase();

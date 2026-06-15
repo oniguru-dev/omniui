@@ -4,18 +4,33 @@
  */
 
 import fs from "node:fs/promises";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "url";
+import { existsSync, readFileSync } from "fs";
 import { red, yellow, green } from "colorette";
 
 // plugins
-import { plugin as router } from '@/plugins/router.plugin';
-import { plugin as directives } from '@/plugins/directives.plugin';
-import { plugin as rsc } from '@/plugins/rsc.plugin';
-import { plugin as unocss } from '@/plugins/unocss.plugin';
+import { plugin as router } from '../plugins/router.plugin';
+import { plugin as directives } from '../plugins/directives.plugin';
+import { plugin as rsc } from '../plugins/rsc.plugin';
+import { plugin as unocss } from '../plugins/unocss.plugin';
 
-import config from '#/omniui.config';
-import { newSitemap } from "@/libs/sitemap";
-import { newRobots } from "@/libs/robots";
+import { newSitemap } from "../libs/sitemap";
+import { newRobots } from "../libs/robots";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const cwd = process.cwd();
+
+function loadConfig() {
+  const configPath = join(cwd, 'omniui.config.ts');
+  if (!existsSync(configPath)) return { port: 8080, local: false, browser: true, upnp: false, baseUrl: 'http://localhost:8080', robots: { crawler: 2, disallow: ['/api/*'], ignore: ['/api/*'] } };
+  const content = readFileSync(configPath, 'utf-8');
+  const match = content.match(/const\s+config\s*=\s*(\{[\s\S]*?\});/);
+  if (!match) return { port: 8080, local: false, browser: true, upnp: false, baseUrl: 'http://localhost:8080', robots: { crawler: 2, disallow: ['/api/*'], ignore: ['/api/*'] } };
+  try { return eval('(' + match[1] + ')'); } catch { return { port: 8080, local: false, browser: true, upnp: false, baseUrl: 'http://localhost:8080', robots: { crawler: 2, disallow: ['/api/*'], ignore: ['/api/*'] } }; }
+}
+
+const config = loadConfig();
 
 const argv = Bun.argv.slice(2);
 const idx = argv.findIndex(x => x === "--ignore" || x === "-i");
@@ -27,7 +42,7 @@ const doGIFski    = !args.includes("gif");
 const doVideo     = !args.includes("video");
 const doAudio     = !args.includes("audio");
 
-const BIN_DIR = join(import.meta.dir, '..', 'bin');
+const BIN_DIR = join(import.meta.dir, '..', '..', 'bin');
 
 async function resolve(name: string): Promise<string | null> {
   const ext = process.platform === 'win32' ? '.exe' : '';
@@ -42,7 +57,7 @@ async function resolve(name: string): Promise<string | null> {
 const missing = new Set<string>();
 
 async function requireBinary(name: string): Promise<string | null> {
-  const bin = await resolve(name); // resolve binary
+  const bin = await resolve(name);
   if (!bin) { missing.add(name); return null; }
   return bin;
 }
@@ -51,11 +66,11 @@ try {
   const start = Bun.nanoseconds();
 
   console.log("⌚ Cleaning previous builds...");
-  await fs.rm('dist', { recursive: true, force: true });
+  await fs.rm(join(cwd, 'dist'), { recursive: true, force: true });
 
   console.log(yellow("⚡ Building frontend... [1/2]"));
   const client = await Bun.build({
-    entrypoints: ['app/index.html'], outdir: 'dist/app',
+    entrypoints: [join(cwd, 'app/index.html')], outdir: join(cwd, 'dist/app'),
     splitting: true, minify: { whitespace: true, syntax: true },
     target: 'browser', format: 'esm', plugins: [unocss, router, directives, rsc],
   })
@@ -63,7 +78,7 @@ try {
 
   console.log(yellow("⚡ Building backend... [2/2]"));
   const server = await Bun.build({
-    entrypoints: ['src/server.ts'], outdir: 'dist/src',
+    entrypoints: [join(cwd, 'src/server.ts')], outdir: join(cwd, 'dist/src'),
     minify: { whitespace: true, syntax: true },
     target: 'bun', format: 'cjs',
     define: { "__bundle__": "true" },
@@ -71,13 +86,13 @@ try {
   if (!server.success) throw new AggregateError(server.logs, "❌ Server-side build failed");
 
   console.log("📂 Copying static assets...");
-  for await (const file of new Bun.Glob('public/**/*').scan())
-    await Bun.write(`dist/${file}`, Bun.file(file));
+  for await (const file of new Bun.Glob('public/**/*').scan({ cwd }))
+    await Bun.write(join(cwd, `dist/${file}`), Bun.file(join(cwd, file)));
 
   console.log("🎴 Optimizing assets...");
-  const assets = "dist/public/assets";
+  const assets = join(cwd, "dist/public/assets");
   const io = { stdout: "inherit" as const, stderr: "inherit" as const };
-  const tmp = "dist/tmp";
+  const tmp = join(cwd, "dist/tmp");
   await fs.mkdir(tmp, { recursive: true });
 
   if (doOxiPNG) {
@@ -150,7 +165,7 @@ try {
   console.log("📡 Generating SEO files...");
   const routes: Array<{ route: string; type: 'static' | 'dynamic' }> = [];
 
-  for await (const file of new Bun.Glob("**/page.{ts,tsx}").scan({ cwd: "app", onlyFiles: true })) {
+  for await (const file of new Bun.Glob("**/page.{ts,tsx}").scan({ cwd: join(cwd, "app"), onlyFiles: true })) {
     if (file.includes("_")) continue;
     let route = "/" + file.replace(/\\/g, "/");
     route = route.replace(/\/?page\.(ts|tsx)$/, "");
@@ -160,8 +175,8 @@ try {
   }
 
   try {
-    await newSitemap(config, "dist/public", routes);
-    await newRobots(config, "dist/public");
+    await newSitemap(config, join(cwd, "dist/public"), routes);
+    await newRobots(config, join(cwd, "dist/public"));
     console.log(green("✔ sitemap.xml & robots.txt generated"));
   } catch (err) {
     console.warn("⚠️ SEO file generation failed:", err);

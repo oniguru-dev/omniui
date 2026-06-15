@@ -5,12 +5,25 @@
 
 import { Elysia } from 'elysia';
 import { staticPlugin } from '@elysiajs/static';
-import { apiRoutes } from '@/api.routes';
+import { apiRoutes } from './api.routes';
 import { join, dirname } from 'node:path';
 import { networkInterfaces } from 'os';
+import { existsSync, readFileSync } from 'fs';
 
-import config from '#/omniui.config';
 const __dirname = join(dirname(Bun.main), '..');
+const cwd = process.cwd();
+
+function loadConfig() {
+  const configPath = join(cwd, 'omniui.config.ts');
+  if (!existsSync(configPath)) return { port: 8080, local: false, browser: true, upnp: false, baseUrl: 'http://localhost:8080', robots: { crawler: 2, disallow: ['/api/*'], ignore: ['/api/*'] } };
+  // Simple config loader - reads and evals the config
+  const content = readFileSync(configPath, 'utf-8');
+  const match = content.match(/const\s+config\s*=\s*(\{[\s\S]*?\});/);
+  if (!match) return { port: 8080, local: false, browser: true, upnp: false, baseUrl: 'http://localhost:8080', robots: { crawler: 2, disallow: ['/api/*'], ignore: ['/api/*'] } };
+  try { return eval('(' + match[1] + ')'); } catch { return { port: 8080, local: false, browser: true, upnp: false, baseUrl: 'http://localhost:8080', robots: { crawler: 2, disallow: ['/api/*'], ignore: ['/api/*'] } }; }
+}
+
+const config = loadConfig();
 
 declare const __bundle__: boolean | undefined;
 const BUNDLE = typeof __bundle__ !== "undefined"
@@ -33,7 +46,7 @@ export async function main() {
 
       const resolvedPath = modulePath.includes(':/') || modulePath.startsWith('/')
         ? modulePath
-        : join(__dirname, '..', modulePath);
+        : join(cwd, modulePath);
       const mod = await import(resolvedPath);
 
       if (typeof mod[functionName] !== 'function')
@@ -66,13 +79,13 @@ export async function main() {
   let opts;
 
   opts = {
-    assets: `${__dirname}/public`, prefix: '', maxAge: 31536000,
+    assets: `${cwd}/public`, prefix: '', maxAge: 31536000,
     directive: 'must-revalidate', alwaysStatic: true
   } as const;
   app.use(!BUNDLE ? await staticPlugin(opts) : staticPlugin(opts));
 
   opts = {
-    assets: `${__dirname}/app`, prefix: '**',
+    assets: `${cwd}/app`, prefix: '**',
     indexHTML: true, bunFullstack: true
   } as const;
   app.use(!BUNDLE ? await staticPlugin(opts) : staticPlugin(opts));

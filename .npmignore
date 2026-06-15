@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.git/
+.gitignore
+.env
+*.log
+.bun/
+.cache/
+app/
+docs/
+omniui.config.ts
+uno.config.ts
+tsconfig.json
+vercel.json

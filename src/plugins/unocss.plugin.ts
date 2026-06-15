@@ -6,22 +6,44 @@
 import type { BunPlugin } from 'bun';
 import { transform } from 'lightningcss';
 import { createGenerator } from '@unocss/core';
-import unocfg from '#/uno.config';
+import { join } from 'path';
+import { existsSync, readFileSync } from 'fs';
+import { defineConfig } from 'unocss';
+import { presetWind4, presetIcons, presetTypography } from 'unocss';
+
+function loadUnoConfig() {
+  const configPath = join(process.cwd(), 'uno.config.ts');
+  if (!existsSync(configPath)) {
+    return defineConfig({
+      presets: [presetWind4(), presetIcons(), presetTypography()],
+      theme: { colors: { accent: "#8040ff" } },
+    });
+  }
+  // Default config - user should configure their own
+  return defineConfig({
+    presets: [presetWind4(), presetIcons(), presetTypography()],
+    theme: { colors: { accent: "#8040ff" } },
+  });
+}
+
+const generator = await createGenerator(loadUnoConfig());
 
 const generator = await createGenerator(unocfg);
 let cache: Promise<string> | null = null;
 
 function process() {
   if (cache) return cache; cache = (async () => {
+    const appDir = join(process.cwd(), 'app');
+    const pubDir = join(process.cwd(), 'public/components');
     const globs = [
-      new Bun.Glob('app/**/*.{html,tsx,jsx,js,ts}'),
-      new Bun.Glob('public/components/**/*.{html,tsx,jsx,js,ts}')
+      new Bun.Glob('**/*.{html,tsx,jsx,js,ts}'),
+      new Bun.Glob('**/*.{html,tsx,jsx,js,ts}')
     ];
 
     let sources = '';
-    for (const glob of globs) {
-      for await (const file of glob.scan())
-        sources += await Bun.file(file).text() + '\n';
+    for (const [glob, dir] of [[globs[0], appDir], [globs[1], pubDir]]) {
+      for await (const file of glob.scan({ cwd: dir }))
+        sources += await Bun.file(join(dir, file)).text() + '\n';
     }
 
     const { css } = await generator.generate(sources);

@@ -1,5 +1,5 @@
 {
-  "name": "omniui",
+  "name": "@omnixui/omniui",
   "version": "1.0.0",
   "description": "Lightweight UI framework for Bun with file routing, server components, and UnoCSS",
   "module": "src/index.ts",
@@ -36,6 +36,14 @@
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
-  "keywords": ["bun", "framework", "elysia", "preact", "unocss", "ssr", "routing"],
+  "keywords": [
+    "bun",
+    "framework",
+    "elysia",
+    "preact",
+    "unocss",
+    "ssr",
+    "routing"
+  ],
   "license": "MIT"
 }

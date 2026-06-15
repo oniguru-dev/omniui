@@ -1,13 +1,9 @@
 #!/usr/bin/env bun
 
-import { spawn } from 'child_process';
+import { spawn, type ChildProcess } from 'child_process';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-
-import {
-  existsSync, writeFileSync,
-  readFileSync, cpSync
-} from 'fs';
+import { existsSync, writeFileSync, readFileSync, cpSync } from 'fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PKG_DIR = join(__dirname, '..');
@@ -20,24 +16,17 @@ const cmd = args[0] || 'dev';
 
 if (cmd === 'create') {
   const name = args[1];
-  if (!name) {
-    console.log('Usage: bun create omniui <project-name>');
-    process.exit(1);
-  }
+  if (!name) { console.log('Usage: bun create omniui <name>'); process.exit(1); }
 
   const target = join(process.cwd(), name);
-  if (existsSync(target)) {
-    console.error(`Error: ${name} already exists`);
-    process.exit(1);
-  }
+  if (existsSync(target)) { console.error(`Error: ${name} already exists`); process.exit(1); }
 
   console.log(`Creating ${name}...`);
   cpSync(TEMPLATE_DIR, target, { recursive: true });
 
-  // update package.json
   const pkgPath = join(target, 'package.json');
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
-  pkg.name = name; // update package.json name
+  pkg.name = name;
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
 
   console.log(`\n  cd ${name}`);
@@ -48,19 +37,34 @@ if (cmd === 'create') {
 
 // ── dev / build / start ──
 
-function run() {
-  const child = spawn('bun', ['--watch', join(__dirname, 'server.ts')], {
+let restarting = false;
+let child: ChildProcess | null = null;
+
+function start() {
+  child = spawn('bun', ['--watch', join(__dirname, 'server.ts')], {
     stdio: 'inherit',
     cwd: process.cwd(),
   });
 
-  child.on('exit', (code) => {
-    if (code === 0) run();
+  child.on('exit', (code, signal) => {
+    if (restarting) { restarting = false; start(); return; }
+    process.exit(code ?? 1);
   });
 }
 
 if (cmd === 'dev') {
-  run();
+  start();
+
+  process.stdin.setRawMode?.(true);
+  process.stdin.resume();
+  process.stdin.setEncoding('utf-8');
+  process.stdin.on('data', (key: string) => {
+    if (key === '\x03') { child?.kill('SIGTERM'); process.exit(0); }
+    if (key === 'r' && child) {
+      restarting = true;
+      child.kill('SIGTERM');
+    }
+  });
 } else if (cmd === 'build') {
   spawn('bun', [join(__dirname, 'scripts/build.script.ts')], { stdio: 'inherit' });
 } else if (cmd === 'start') {
