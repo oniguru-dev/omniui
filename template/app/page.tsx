@@ -1,6 +1,10 @@
 import { useEffect, useState } from "preact/hooks";
 import { Link } from "wouter-preact";
-import { LiquidGlass, FollowField, TiltCard, Theme } from "@omnixui/omniui";
+
+import { LiquidGlass } from "@/components/LiquidGlass";
+import { FollowField } from "@/components/FollowField";
+import { TiltCard } from "@/components/TiltCard";
+import { Theme } from "@/components/Theme";
 
 import { getServerTime } from "./server";
 

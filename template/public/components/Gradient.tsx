@@ -5,58 +5,27 @@ export function Gradient({ children, class: className = '', target }: {
   children: ComponentChildren; class?: string; target?: string;
 }): JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
+  const glowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!document.getElementById('gradient-style')) {
-      const style = document.createElement('style');
-      style.id = 'gradient-style'; style.textContent = `
-.gradient-root {
-  position: relative;
-  overflow: hidden;
-}
-.gradient-root::before {
-  content: '';
-  position: absolute;
-  width: 300px;
-  height: 300px;
-  left: calc(var(--gx, 50%) - 150px);
-  top: calc(var(--gy, 50%) - 150px);
-  background: radial-gradient(
-    circle,
-    rgba(128, 64, 255, 0.3) 0%,
-    rgba(128, 64, 255, 0.1) 30%,
-    transparent 70%
-  );
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-  transition: left 0.12s ease-out, top 0.12s ease-out;
-}
-.gradient-root > * {
-  position: relative;
-  z-index: 1;
-}`;
-
-      document.head.appendChild(style);
-    }
-
     const element: HTMLElement | null = target
       ? document.querySelector(target) : ref.current;
     if (!element) return;
 
     const root = ref.current;
+    const glow = glowRef.current;
     let raf: number | null = null;
     let pos = { x: 50, y: 50 };
     let tgt = { x: 50, y: 50 };
 
     const animate = () => {
-      if (!root) return;
+      if (!root || !glow) return;
 
       pos.x += (tgt.x - pos.x) * 0.12;
       pos.y += (tgt.y - pos.y) * 0.12;
 
-      root.style.setProperty('--gx', `${pos.x}%`);
-      root.style.setProperty('--gy', `${pos.y}%`);
+      glow.style.left = `calc(${pos.x}% - 150px)`;
+      glow.style.top = `calc(${pos.y}% - 150px)`;
 
       if (Math.abs(pos.x - tgt.x) > 0.05
         || Math.abs(pos.y - tgt.y) > 0.05
@@ -97,8 +66,12 @@ export function Gradient({ children, class: className = '', target }: {
   }, [target]);
 
   return (
-    <div style={{ '--gx': '50%', '--gy': '50%' }}
-      ref={ref} class={`gradient-root ${className}`}
-    >{children}</div>
+    <div ref={ref} class={`relative overflow-hidden ${className}`}>
+      <div ref={glowRef}
+        class="absolute size-75 rounded-full pointer-events-none z-0 transition-all duration-100 ease-out"
+        style={{ background: 'radial-gradient(circle, rgba(128,64,255,0.3) 0%, rgba(128,64,255,0.1) 30%, transparent 70%)' }}
+      />
+      <div class="relative z-10">{children}</div>
+    </div>
   );
 }

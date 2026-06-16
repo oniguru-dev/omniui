@@ -17,6 +17,12 @@ const config = {
     disallow: [ "/api/*" ],
     ignore: [ "/api/*" ]
   },
+
+  i18n: {
+    defaultLocale: "en",
+    locales: ["en", "ru"],
+    cookie: "locale",
+  },
 };
 
 export default config;

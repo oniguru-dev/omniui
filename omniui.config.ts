@@ -17,6 +17,14 @@ const config = {
     disallow: [ "/api/*" ],
     ignore: [ "/api/*" ]
   },
+
+  rateLimit: {
+    max: 127,
+    duration: 60000,
+    routes: {
+      "/_bun/rsc": { max: 15, duration: 60000 }
+    }
+  },
 };
 
 export default config;
