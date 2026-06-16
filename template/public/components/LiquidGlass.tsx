@@ -1,19 +1,11 @@
 import type { JSX, HTMLAttributes, ComponentChildren } from 'preact';
-import { useEffect } from 'preact/hooks';
 
 export function LiquidGlass({ children, class: className = '', ...props }: {
   children?: ComponentChildren; class?: string } & HTMLAttributes<HTMLDivElement>
 ): JSX.Element {
-  useEffect(() => { if (!document.getElementById('liquid-glass')) {
-    const style = document.createElement('style');
-    style.id = 'liquid-glass'; style.innerHTML = `\
-.liquid-glass{background:rgba(255,255,255,.04);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.06);box-shadow:inset 0 1.1px rgba(255,255,255,.2),inset 0 -1.1px rgba(255,255,255,.05);position:relative;overflow:hidden}
-    `; document.head.appendChild(style);
-  }; }, []);
-
   return (
-    <div class={`liquid-glass ${className}`} {...props}>
-      {children}
-    </div>
+    <div class={`backdrop-blur-xl backdrop-saturate-1.5 bg-white/5 border border-white/10 relative overflow-hidden ${className}`}
+      style={{ boxShadow: 'inset 0 1px rgba(255,255,255,0.15), 0 8px 32px rgba(0,0,0,0.12)' }} {...props}
+    >{children}</div>
   );
 }

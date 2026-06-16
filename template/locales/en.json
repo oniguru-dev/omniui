@@ -1,0 +1,17 @@
+{
+  "app": {
+    "title": "Omni UI",
+    "description": "Lightweight UI framework for Bun"
+  },
+  "nav": {
+    "home": "Home",
+    "docs": "Docs",
+    "features": "Features"
+  },
+  "hero": {
+    "title": "Omni UI",
+    "subtitle": "Lightweight UI framework for Bun. File routing, server components, zero config.",
+    "cta": "Get Started",
+    "explore": "Explore Features"
+  }
+}

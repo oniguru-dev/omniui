@@ -8,10 +8,11 @@ export const plugin: BunPlugin = {
 
     build.onLoad({ filter: /.*/, namespace: "rsc" }, async () => {
       const contents = `
-export async function callServer(modulePath: string, functionName: string, args: any[]) {
+export async function callServer(modulePath, functionName, args) {
   const response = await fetch('/_bun/rsc', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ module: modulePath, function: functionName, args })
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: modulePath + ':' + functionName, args })
   });
 
   if (!response.ok) throw new Error(

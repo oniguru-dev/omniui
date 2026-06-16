@@ -14,7 +14,8 @@ import { Router, Route, Switch, useLocation } from 'wouter-preact';
 import FallbackPage from "./_static/Fallback";
 import Fault from './_static/Fault';
 
-import { ErrorBoundary, PageLoader, PageLoaderSignal, AlertProvider } from "@omnixui/omniui";
+import { ErrorBoundary, PageLoader, PageLoaderSignal } from "@omnixui/omniui";
+import { AlertProvider } from "@/components/AlertContext";
 
 function AlwaysOnTop() {
   const [pathName] = useLocation();

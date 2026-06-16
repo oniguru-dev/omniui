@@ -7,6 +7,7 @@
 
 import { spawn, type ChildProcess } from 'child_process';
 import { pkgRoot, source } from './libs/paths';
+import { getConfig } from './libs/config';
 
 import { join } from 'path';
 
@@ -46,19 +47,6 @@ function openBrowser(url: string) {
   const cmd = process.platform === 'darwin' ? 'open'
     : process.platform === 'win32' ? 'start' : 'xdg-open';
   try { Bun.spawn([cmd, url]); } catch {}
-}
-
-function readConfig(): Record<string, any> {
-  const configPath = join(process.cwd(), 'omniui.config.ts');
-  if (!existsSync(configPath)) return {};
-
-  const content = readFileSync(configPath, 'utf-8');
-  const match = content.match(/const\s+config\s*=\s*(\{[\s\S]*?\});/);
-  if (!match) return {};
-
-  try { return new Function(
-    'return (' + match[1] + ')'
-  )(); } catch { return {}; }
 }
 
 // ── create ──
@@ -189,7 +177,7 @@ function cmdStart() {
     process.exit(1);
   }
 
-  const config = readConfig();
+  const config = getConfig();
   const port = config.port ?? 8080;
 
   console.log(`
@@ -220,7 +208,7 @@ function cmdPreview() {
     process.exit(1);
   }
 
-  const config = readConfig();
+  const config = getConfig();
   const port = config.previewPort ?? 4173;
 
   console.log(`
@@ -334,6 +322,7 @@ function cmdHelp() {
   ${DIM}  Commands${R}
 
   ${ACCENT}  omniui create${R}   ${GREEN}<name>${R}       Create a new project
+  ${DIM}  aliases: init, new${R}
   ${ACCENT}  omniui dev${R}                      Start dev server
   ${ACCENT}  omniui build${R}                    Build for production
   ${ACCENT}  omniui start${R}                    Run production server
@@ -359,7 +348,7 @@ const args = process.argv.slice(2);
 const command = args[0] || 'dev';
 
 switch (command) {
-  case 'create':
+  case 'create': case 'init': case 'new':
     cmdCreate(args[1]);
     break;
 

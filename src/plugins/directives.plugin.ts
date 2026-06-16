@@ -24,9 +24,8 @@ function generateProxy(path: string, exports: string[]): string {
   return exports.map(name => `
 export async function ${name}(...args) {
   const response = await fetch('/_bun/rsc', { method: 'POST',
-    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(
-      { id: '${relative}:${name}', args }
-    )
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: '${relative}:${name}', args })
   });
 
   if (!response.ok) throw new Error(

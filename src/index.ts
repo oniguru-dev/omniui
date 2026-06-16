@@ -1,4 +1,7 @@
 export { ErrorBoundary } from './components/ErrorBoundary';
+export { Head } from './components/Head';
+export { I18nProvider } from './components/I18nProvider';
+export { useI18n, useTranslation } from './components/I18n';
 export { PageLoader, PageLoaderSignal, usePageLoader } from './components/PageLoader';
 export { Theme } from './components/Theme';
 

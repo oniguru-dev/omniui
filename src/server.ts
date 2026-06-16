@@ -5,10 +5,21 @@
 
 import { Elysia } from 'elysia';
 import { staticPlugin } from '@elysiajs/static';
+import { rateLimit } from 'elysia-rate-limit';
 
 import { join } from 'node:path';
 import { networkInterfaces } from 'os';
 import { cwd, pkgRoot } from './libs/paths';
+import { getConfig } from './libs/config';
+import { getTranslations, detectLocale, type I18nConfig } from './libs/i18n';
+
+function getIp(req: any): string {
+  return req.headers?.get?.('x-forwarded-for')?.split(',')[0]?.trim()
+    || req.headers?.get?.('x-real-ip')
+    || 'unknown';
+}
+
+// version
 
 const PKG_DIR = pkgRoot();
 
@@ -16,27 +27,13 @@ const VERSION = JSON.parse(await Bun.file(
   join(PKG_DIR, 'package.json') // package.json
 ).text()).version;
 
-async function resolve(name: string): Promise<string> {
-  const user = join(cwd, name);
-  if (await Bun.file(user).exists()) return user;
-  const pkg = join(PKG_DIR, name);
-  return await Bun.file(pkg).exists() ? pkg : user;
-}
-
 declare const __bundle__: boolean | undefined;
 const BUNDLE = typeof __bundle__ !== "undefined"
   ? __bundle__ : process.env.NODE_ENV === "bundle";
 
-async function loadConfig() {
-  const path = await resolve('omniui.config.ts');
-  const content = await Bun.file(path).text();
-  const match = content.match(/const\s+config\s*=\s*(\{[\s\S]*?\});/);
-  if (!match) return {};
-  try { return new Function('return (' + match[1] + ')')(); } catch { return {}; }
-}
-
 export async function main() {
-  const config = await loadConfig();
+  const config = getConfig();
+
   const app = new Elysia({ serve: {
     routes: { "/api": false, "/api/*": false }
   },
@@ -45,14 +42,33 @@ export async function main() {
     seed: { value: 'this.framework' }
   })
 
-  .onAfterHandle(({ set }) => {
-    Object.assign(set.headers, {
-      'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'DENY',
-      'X-XSS-Protection': '1; mode=block',
-      'Referrer-Policy': 'strict-origin-when-cross-origin'
-    });
+  // Rate Limit
+
+  .use(rateLimit({
+    duration: config.rateLimit?.duration ?? 60000,
+    max: config.rateLimit?.max ?? 127, scoping: 'global',
+    headers: true, generator: (req) => getIp(req),
+  }))
+
+  // XSS-protection & CSP, HSTS
+
+  .onAfterHandle(({ set, request }) => { Object.assign(set.headers, {
+    'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'X-XSS-Protection': '1; mode=block', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+  }); })
+
+  // Error Boundary
+
+  .onError(({ code, error }) => {
+    if (code === 'INTERNAL_SERVER_ERROR') {
+      if (process.env.NODE_ENV !== 'production')
+        console.error('[Server]', error); // logging errors
+      else
+        console.error('[Server]', error?.message || 'unknown');
+    }
   })
+
+  // RSC
 
   .post('/_bun/rsc', async ({ body, status }) => {
     try {
@@ -61,8 +77,7 @@ export async function main() {
       if (!id || typeof id !== 'string')
         return status(400, { error: 'Invalid id' });
 
-      const colonIdx = id.indexOf(':');
-      if (colonIdx === -1)
+      const colonIdx = id.indexOf(':'); if (colonIdx === -1)
         return status(400, { error: 'Invalid id format' });
 
       const modulePath = id.slice(0, colonIdx);
@@ -70,21 +85,35 @@ export async function main() {
 
       if (!modulePath.startsWith('app/') || modulePath.includes('..'))
         return status(403, { error: 'Access denied' });
-
       if (!functionName || !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(functionName))
         return status(400, { error: 'Invalid function name' });
 
-      const resolvedPath = join(process.cwd(), modulePath);
-      const mod = await import(resolvedPath);
-      const result = await mod[functionName](...args);
+      const path = join(process.cwd(), modulePath);
+      const module = await import(path);
+      const result = await module[functionName](...args);
       return { result };
     } catch (err: any) {
-      console.error('[RSC] Error:', err);
+      if (process.env.NODE_ENV !== 'production')
+        console.error('[RSC] Error:', err); // logging errors
+      else
+        console.error('[RSC] Error:', err?.message || 'unknown');
+
       return status(500, { error: 'Internal server error' });
     }
   })
 
+  // middleware
+
+  const middleware = join(cwd, 'middleware.ts');
+
+  if (await Bun.file(middleware).exists()) {
+    const mod = await import(middleware);
+    const codepoint = mod.default;
+    if (codepoint) app.use(codepoint);
+  }
+
   // api routes
+
   const api = join(cwd, 'app', 'api.routes.ts');
 
   if (await Bun.file(api).exists()) {
@@ -122,6 +151,14 @@ export async function main() {
 
 // ── CLI ──
 
+let session: any = null;
+
+let localUrl = '';
+let networkUrl: string | null = null;
+
+let proxyPort: number | null = null;
+let proxyIp: string | null = null;
+
 function getLocalIP(): string | null {
   for (const name of Object.keys(networkInterfaces()))
     for (const iface of networkInterfaces()[name] ?? [])
@@ -147,7 +184,7 @@ const RED = '\x1b[38;2;255;100;100m';
 const YELLOW = '\x1b[38;2;255;200;60m';
 const GREEN = '\x1b[38;2;120;200;255m';
 
-function printBanner(port: number, local: string, network: string | null) {
+function printBanner(local: string, network: string | null) {
   console.log(`
   ${ACCENT}  Omni UI${R} ${DIM}v${VERSION}${R}
 
@@ -169,15 +206,25 @@ function printHelp() {
   `);
 }
 
-let localUrl = '';
-let networkUrl: string | null = null;
-let session: any = null;
-let config: any = {};
+function cleanUPnP() {
+  if (!proxyPort || !proxyIp) return; try {
+    Bun.spawn([
+      'netsh', 'interface', 'portproxy', 'delete', 'v4tov4',
+      'listenaddress=0.0.0.0', `listenport=${proxyPort}`,
+    ], { stdio: ['ignore', 'pipe', 'pipe'] });
+  } catch {
+    console.warn('[UPnP] portproxy unavailable');
+  }
+}
+
+process.on('exit', cleanUPnP); // cleanup portproxy on exit
+process.on('SIGTERM', () => { cleanUPnP(); process.exit(0); });
+process.on('SIGINT', () => { cleanUPnP(); process.exit(0); });
 
 async function startServer() {
   if (session) {
-    session.stop();
-    session = null;
+    session.stop(); session = null;
+    cleanUPnP(); // cleanup portproxy
   };
 
   const { app, config } = await main();
@@ -189,13 +236,31 @@ async function startServer() {
   const ip = config.local ? null : getLocalIP();
   networkUrl = ip ? `http://${ip}:${port}` : null;
 
-  if (config.upnp && ip) { try {
-    const { execSync } = await import('child_process');
-    execSync(`netsh interface portproxy add v4tov4 listenport=${port} listenaddress=0.0.0.0 connectport=${port} connectaddress=${ip}`, { stdio: 'ignore' });
-  } catch {} }
+  if (config.upnp && ip) {
+    const asPort = /^\d{1,5}$/.test(String(port)); // port forwarding
+    const asIp = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ip);
+
+    if (asIp && asPort) { try {
+      const proc = Bun.spawn([
+        'netsh', 'interface', 'portproxy', 'add', 'v4tov4',
+        'listenaddress=0.0.0.0', `listenport=${port}`,
+        `connectaddress=${ip}`, `connectport=${port}`,
+      ], { stdio: ['ignore', 'pipe', 'pipe'] });
+
+      const exitCode = await proc.exited; if (exitCode !== 0) {
+        const err = await new Response(proc.stderr).text();
+        console.warn(`[UPnP] portproxy failed (code ${exitCode}):`, err.trim());
+      } else {
+        proxyPort = port;
+        proxyIp = ip;
+      }
+    } catch (e) {
+      console.warn('[UPnP] portproxy unavailable:', e);
+    }; }
+  }
 
   clearConsole(); printBanner(
-    port, localUrl, networkUrl
+    localUrl, networkUrl
   );
 
   if (config.browser) setTimeout(
@@ -222,7 +287,7 @@ startServer().then(() => {
       case 'o':
         openBrowser(localUrl); break; // open in browser
       case 'c':
-        clearConsole(); printBanner(config.port ?? 8080, localUrl, networkUrl); break;
+        clearConsole(); printBanner(localUrl, networkUrl); break;
       case 'h':
         printHelp(); break; // show help
       case 'q':

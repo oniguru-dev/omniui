@@ -1,4 +1,4 @@
-import { Component, type ComponentChildren, type VNode } from 'preact';
+import { Component, type ComponentChildren } from 'preact';
 
 interface Props {
   children: ComponentChildren; fallback?: | ComponentChildren

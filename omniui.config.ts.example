@@ -17,6 +17,14 @@ const config = {
     disallow: [ "/api/*" ], // robots.txt
     ignore: [ "/api/*" ],   // sitemap.xml
   },
+
+  rateLimit: { // elysia-rate-limit
+    max: 127,               // global max requests
+    duration: 60000,        // global window (ms)
+    routes: {               // per-route overrides
+      "/_bun/rsc": { max: 20, duration: 60000 },
+    },
+  },
 };
 
 export default config;

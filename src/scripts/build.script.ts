@@ -5,10 +5,10 @@
 
 import fs from "node:fs/promises";
 import { join } from "node:path";
-import { readFileSync } from "fs";
 import { red, yellow, green } from "colorette";
 
 import { pkgRoot, resolve } from '../libs/paths';
+import { getConfig } from '../libs/config';
 
 // plugins
 import { plugin as router } from '../plugins/router.plugin';
@@ -21,17 +21,6 @@ import { newRobots } from "../libs/robots";
 
 const cwd = process.cwd();
 const PKG_DIR = pkgRoot();
-
-function getConfig() {
-  const path = resolve('omniui.config.ts');
-  const content = readFileSync(path, 'utf-8');
-  const match = content.match(/const\s+config\s*=\s*(\{[\s\S]*?\});/);
-  if (!match) return {};
-
-  try { return new Function(
-    'return (' + match[1] + ')'
-  )(); } catch { return {}; }
-}
 
 const config = getConfig();
 

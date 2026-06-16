@@ -17,6 +17,12 @@ const config = {
     disallow: [ "/api/*" ], // robots.txt
     ignore: [ "/api/*" ],   // sitemap.xml
   },
+
+  i18n: { // internationalization
+    defaultLocale: "en",     // default language
+    locales: ["en", "ru"],   // available locales
+    cookie: "locale",        // cookie name for locale persistence
+  },
 };
 
 export default config;

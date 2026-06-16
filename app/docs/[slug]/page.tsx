@@ -13,6 +13,7 @@ renderer.tablecell = function (token: any) {
   const tag = token.header ? 'th' : 'td';
   const align = token.align ? ` style="text-align:${token.align}"` : '';
   const text = marked.parseInline(token.text) as string;
+
   const cls = token.header
     ? 'px-5 py-3.5 font-semibold text-white border-b border-white/10 bg-white/3 font-sans tracking-[0.015em]'
     : 'px-5 py-3.5 text-zinc-300 align-middle border-b border-white/5 font-sans tracking-[0.015em]';
@@ -50,8 +51,18 @@ marked.use({ renderer });
 function sanitizeHtml(html: string): string { return html
   .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
   .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+  .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '')
+  .replace(/<embed\b[^>]*>/gi, '')
+  .replace(/<svg\b[^<]*(?:(?!<\/svg>)<[^<]*)*<\/svg>/gi, '')
+  .replace(/<math\b[^<]*(?:(?!<\/math>)<[^<]*)*<\/math>/gi, '')
+  .replace(/<form\b[^<]*(?:(?!<\/form>)<[^<]*)*<\/form>/gi, '')
   .replace(/\son[a-z]+=(["'])(?:(?!\1).)*?\1/gi, ' ')
-  .replace(/\son[a-z]+=\S+/gi, '');
+  .replace(/\son[a-z]+=\S+/gi, '')
+  .replace(/href\s*=\s*(["']?)\s*javascript:/gi, 'href=$1#')
+  .replace(/src\s*=\s*(["']?)\s*javascript:/gi, 'src=$1#')
+  .replace(/data\s*=\s*(["']?)\s*javascript:/gi, 'data=$1#')
+  .replace(/<base\b[^>]*>/gi, '')
+  .replace(/<meta\b[^>]*http-equiv\s*=\s*(["']?)refresh/gi, '<!-- removed -->');
 }
 
 const PROSE = [
@@ -93,28 +104,29 @@ export default function Page({ params }: any) {
     </div>
   );
 
-  const slug = params.slug || 'introduction'; const doc = data.docs[slug];
-  const html = doc ? sanitizeHtml(marked.parse(doc.content) as string) : '';
+  const slug = params.slug || 'introduction'; const document = data.docs[slug];
+  const html = document ? sanitizeHtml(marked.parse(document.content) as string) : '';
 
-  const meta = doc?.meta || {};
+  const meta = document?.meta || {};
 
-  const fmtDate = (date: string) => {
+  const formatDate = (date: string) => {
     if (!date) return ''; const [y, m, day] = date.split('-'); const months = [
-      'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ]; return `${Number(day)} ${months[Number(m)-1]} ${y}`;
   };
 
   // sidebar
   const sections: { title: string; items: { label: string; slug: string }[] }[] = [];
-  let cur = { title: '', items: [] as { label: string; slug: string }[] };
+  let item = { title: '', items: [] as { label: string; slug: string }[] };
 
   for (const line of data.summary.split('\n')) {
-    const h = line.match(/^##\s+(.+)/);
-    if (h) { if (cur.items.length || cur.title) sections.push(cur); cur = { title: h[1], items: [] }; continue; }
-    const m = line.match(/- \[([^\]]+)\]\(([^)]+)\)/);
-    if (m) cur.items.push({ label: m[1], slug: m[2] === '/' ? 'introduction' : m[2].slice(1) });
+    const highlight = line.match(/^##\s+(.+)/);
+    if (highlight) { if (item.items.length || item.title) sections.push(item); item = { title: highlight[1], items: [] }; continue; }
+    const match = line.match(/- \[([^\]]+)\]\(([^)]+)\)/);
+    if (match) item.items.push({ label: match[1], slug: match[2] === '/' ? 'introduction' : match[2].slice(1) });
   }
-  if (cur.items.length) sections.push(cur);
+
+  if (item.items.length) sections.push(item);
 
   return (
     <div class="min-h-screen bg-black text-zinc-100 overflow-hidden">
@@ -148,32 +160,35 @@ export default function Page({ params }: any) {
           </Link>
 
           <nav class="space-y-6" onClick={() => setMenuOpen(false)}>
-            {sections.map(s => (
-              <div key={s.title}>
-                {s.title && <span class="block px-4 text-[10px] font-bold tracking-widest text-zinc-500 uppercase font-sans mb-1">{s.title}</span>}
-                <div class="space-y-0.5">
-                  {s.items.map(({ label, slug: s }) => (
-                    <Link key={s} href={`/docs/${s}`} class={`block px-4 py-2 text-[15px] font-sans tracking-wide rounded-lg transition-all duration-200 ${s === slug ? 'bg-accent/10 text-accent font-medium' : 'text-zinc-400 hover:text-white hover:bg-white/3'}`}>{label}</Link>
-                  ))}
-                </div>
+            {sections.map(section => (
+              <div key={section.title}>
+                {section.title && <span 
+                  class="block px-4 text-[10px] font-bold tracking-widest text-zinc-500 uppercase font-sans mb-1"
+                >{section.title}</span>}
+
+                <div class="space-y-0.5">{section.items.map(({ label, slug }) => (
+                  <Link key={slug} href={`/docs/${slug}`} class={"block px-4 py-2 text-[15px] font-sans tracking-wide rounded-lg transition-all duration-200" +
+                    (slug === slug ? 'bg-accent/10 text-accent font-medium' : 'text-zinc-400 hover:text-white hover:bg-white/3')
+                  }>{label}</Link>
+                ))}</div>
               </div>
             ))}
           </nav>
         </aside>
 
         <main class="flex-1 overflow-y-auto py-24 px-8 lg:py-20 lg:px-24 pt-20 lg:pt-16 bg-black scrollbar">
-          {doc ? (
+          {document ? (
             <div class="max-w-5xl mx-auto">
               <div class="flex items-center gap-3 text-[13px] text-zinc-500 font-sans tracking-wide mb-3">
                 {meta.section && <span class="font-medium">{meta.section}</span>}
                 {meta.section && meta.created && <span class="text-zinc-700">·</span>}
-                {meta.created && <span class="flex items-center gap-1.5"><span class="i-solar-clock-circle-bold text-[12px]" />{fmtDate(meta.created)}</span>}
+                {meta.created && <span class="flex items-center gap-1.5"><span class="i-solar-clock-circle-bold text-[12px]" />{formatDate(meta.created)}</span>}
                 {meta.created && meta.edited && meta.edited !== meta.created && <>
                   <span class="text-zinc-700">·</span>
-                  <span class="flex items-center gap-1.5"><span class="i-solar-pen-bold text-[12px]" />{fmtDate(meta.edited)}</span>
+                  <span class="flex items-center gap-1.5"><span class="i-solar-pen-bold text-[12px]" />{formatDate(meta.edited)}</span>
                 </>}
               </div>
-              <h1 class="text-[48px] font-bold text-white tracking-tight leading-tight mb-3">{doc.title}</h1>
+              <h1 class="text-[48px] font-bold text-white tracking-tight leading-tight mb-3">{document.title}</h1>
               {meta.description && <p class="text-[18px] text-zinc-400 font-sans tracking-[0.015em] mb-10">{meta.description}</p>}
               <article class={PROSE} dangerouslySetInnerHTML={{ __html: html }} />
             </div>
