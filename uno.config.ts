@@ -17,8 +17,8 @@ export default defineConfig({
   ],
 
   theme: { colors: {
-    accent: "#8040ff",
-  }},
+    accent: "#8040ff"
+  }, },
 
   shortcuts: [
     // noise

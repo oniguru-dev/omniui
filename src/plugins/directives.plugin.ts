@@ -5,7 +5,7 @@ const USE_CLIENT = "'use client'";
 
 async function getDirective(filePath: string): Promise<'server' | 'client' | null> {
   try {
-    const content = await Bun.file(filePath).text(); // content of the file
+    const content = await Bun.file(filePath).text();
     const directive = content.split('\n')[0]?.trim().replace(/;$/, '') || '';
 
     if (directive === USE_SERVER || directive === '"use server"') return 'server';
@@ -17,13 +17,15 @@ async function getDirective(filePath: string): Promise<'server' | 'client' | nul
   }
 }
 
-function generateProxy(path: string, exports: string[], hasDefaultExport: boolean): string {
-  const imports = path.replace(/\\/g, '/');
-  const proxies = exports.map(name => `
+function generateProxy(path: string, exports: string[]): string {
+  const relative = path.replace(/\\/g, '/')
+    .replace(/^.*?\/app\//, 'app/');
+
+  return exports.map(name => `
 export async function ${name}(...args) {
   const response = await fetch('/_bun/rsc', { method: 'POST',
     headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(
-      { module: '${imports}', function: '${name}', args }
+      { id: '${relative}:${name}', args }
     )
   });
 
@@ -33,25 +35,8 @@ export async function ${name}(...args) {
 
   const data = await response.json();
   return data.result;
-}`).join('\n');
-
-  const defaultProxy = hasDefaultExport ? `
-export default async function(...args) {
-  const response = await fetch('/_bun/rsc', { method: 'POST',
-    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(
-      { module: '${imports}', function: 'default', args }
-    )
-  });
-
-  if (!response.ok) throw new Error(
-    \`RSC call failed: \${response.statusText}\`
-  );
-
-  const data = await response.json();
-  return data.result;
-}` : '';
-
-  return proxies + defaultProxy;
+}
+  `.trim()).join('\n');
 }
 
 export const plugin: BunPlugin = {
@@ -63,15 +48,12 @@ export const plugin: BunPlugin = {
         const content = await Bun.file(args.path).text();
         const exports: string[] = []; let match; let regexp;
 
-        regexp = /export\s+(?:async\s+)?function\s+(\w+)/g; // regexp for function exports
+        regexp = /export\s+(?:async\s+)?function\s+(\w+)/g;
         while ((match = regexp.exec(content)) !== null) exports.push(match[1]!);
-        regexp = /export\s+const\s+(\w+)\s*=/g; // regexp for const exports
+        regexp = /export\s+const\s+(\w+)\s*=/g;
         while ((match = regexp.exec(content)) !== null) exports.push(match[1]!);
 
-        const hasDefaultExport = /export\s+default\s+(?:async\s+)?(?:function|class|\()/.test(content);
-
-        const proxy = generateProxy(args.path, exports, hasDefaultExport);
-        return { contents: proxy, loader: "js" };
+        return { contents: generateProxy(args.path, exports), loader: "js" };
       }
 
       return undefined;

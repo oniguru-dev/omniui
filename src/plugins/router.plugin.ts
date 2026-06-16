@@ -16,7 +16,8 @@ export const plugin: BunPlugin = {
       // Scan page files
       for await (const file of pageGlob.scan({
         cwd: join(process.cwd(), "app"), onlyFiles: true
-      })) { const segments = file.replace(/\\/g, '/').split('/');
+      })) {
+        const segments = file.replace(/\\/g, '/').split('/');
         if (segments.slice(0, -1).some(s => s.startsWith('_'))) continue;
 
         let route = ("/" + file.replace(/\\/g, "/")).toLowerCase();
@@ -34,7 +35,8 @@ export const plugin: BunPlugin = {
       // Scan layout files
       for await (const file of layoutGlob.scan({
         cwd: join(process.cwd(), "app"), onlyFiles: true
-      })) { const segments = file.replace(/\\/g, '/').split('/');
+      })) {
+        const segments = file.replace(/\\/g, '/').split('/');
         if (segments.slice(0, -1).some(s => s.startsWith('_'))) continue;
 
         let route = ("/" + file.replace(/\\/g, "/")).toLowerCase();

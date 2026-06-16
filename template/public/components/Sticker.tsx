@@ -1,5 +1,4 @@
-/** @jsxImportSource preact */
-import { type JSX } from 'preact';
+import type { JSX } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import lottie, { type AnimationItem } from 'lottie-web';
 import { gunzipSync } from 'fflate';

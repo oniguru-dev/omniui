@@ -1,2 +1,12 @@
 export { ErrorBoundary } from './components/ErrorBoundary';
 export { PageLoader, PageLoaderSignal, usePageLoader } from './components/PageLoader';
+export { Theme } from './components/Theme';
+
+// Public components
+export { LiquidGlass } from '../public/components/LiquidGlass';
+export { FollowField } from '../public/components/FollowField';
+export { TiltCard } from '../public/components/TiltCard';
+export { AlertProvider, useAlert } from '../public/components/AlertContext';
+export { Alert, AlertTitle, AlertDescription } from '../public/components/Alert';
+export { Gradient } from '../public/components/Gradient';
+export { Sticker } from '../public/components/Sticker';

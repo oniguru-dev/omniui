@@ -1,0 +1,32 @@
+:root, [data-theme="dark"] {
+  --bg: #080808;
+  --bg-card: #141414;
+  --bg-card-hover: #1c1c1c;
+  --text: #f0f0f0;
+  --text-muted: #777;
+  --border: rgba(255,255,255,0.08);
+  --nav-bg: rgba(8,8,8,0.85);
+}
+
+[data-theme="light"] {
+  --bg: #f7f7f7;
+  --bg-card: #eee;
+  --bg-card-hover: #e4e4e4;
+  --text: #1a1a1a;
+  --text-muted: #888;
+  --border: rgba(0,0,0,0.08);
+  --nav-bg: rgba(247,247,247,0.85);
+}
+
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+  transition-delay: 0s !important;
+}
+
+[data-theme] {
+  background: var(--bg);
+  color: var(--text);
+}

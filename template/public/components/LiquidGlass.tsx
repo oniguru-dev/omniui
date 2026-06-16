@@ -1,14 +1,9 @@
-/** @jsxImportSource preact */
 import type { JSX, HTMLAttributes, ComponentChildren } from 'preact';
 import { useEffect } from 'preact/hooks';
 
-interface LiquidGlassProps extends HTMLAttributes<HTMLDivElement> {
-  children?: ComponentChildren;
-}
-
-export function LiquidGlass({
-  children, class: className = '', ...props
-}: LiquidGlassProps): JSX.Element {
+export function LiquidGlass({ children, class: className = '', ...props }: {
+  children?: ComponentChildren; class?: string } & HTMLAttributes<HTMLDivElement>
+): JSX.Element {
   useEffect(() => { if (!document.getElementById('liquid-glass')) {
     const style = document.createElement('style');
     style.id = 'liquid-glass'; style.innerHTML = `\

@@ -28,11 +28,9 @@ function getConfig() {
   const match = content.match(/const\s+config\s*=\s*(\{[\s\S]*?\});/);
   if (!match) return {};
 
-  try {
-    return new Function('return (' + match[1] + ')')();
-  } catch {
-    return {};
-  }
+  try { return new Function(
+    'return (' + match[1] + ')'
+  )(); } catch { return {}; }
 }
 
 const config = getConfig();

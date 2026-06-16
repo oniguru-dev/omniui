@@ -90,7 +90,7 @@ async function collectDocs(dir: string, prefix = '') {
  * 26.05-r03.1 → stable release, 3 мая, билд 1
  */
 
-export const apiRoutes = new Elysia({ prefix: '/api' })
+export default new Elysia({ prefix: '/api' })
 
   .get('/docs', async () => {
     const summaryFile = Bun.file(join(DOCS_DIR, 'SUMMARY.md'));

@@ -1,14 +1,9 @@
-/** @jsxImportSource preact */
-import { type JSX } from 'preact';
+import type { JSX, ComponentChildren } from 'preact';
 import { useRef, useEffect } from 'preact/hooks';
 
-interface GradientProps {
-  children: any;
-  class?: string;
-  target?: string;
-}
-
-export function Gradient({ children, class: className = '', target }: GradientProps): JSX.Element {
+export function Gradient({ children, class: className = '', target }: {
+  children: ComponentChildren; class?: string; target?: string;
+}): JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -63,11 +58,11 @@ export function Gradient({ children, class: className = '', target }: GradientPr
       root.style.setProperty('--gx', `${pos.x}%`);
       root.style.setProperty('--gy', `${pos.y}%`);
 
-      if (Math.abs(pos.x - tgt.x) > 0.05 || Math.abs(pos.y - tgt.y) > 0.05) {
-        raf = requestAnimationFrame(animate);
-      } else {
-        raf = null;
-      }
+      if (Math.abs(pos.x - tgt.x) > 0.05
+        || Math.abs(pos.y - tgt.y) > 0.05
+      ) raf = requestAnimationFrame(animate);
+
+      else raf = null;
     };
 
     const onMove = (e: MouseEvent) => {
@@ -102,11 +97,8 @@ export function Gradient({ children, class: className = '', target }: GradientPr
   }, [target]);
 
   return (
-    <div
+    <div style={{ '--gx': '50%', '--gy': '50%' }}
       ref={ref} class={`gradient-root ${className}`}
-      style={{ '--gx': '50%', '--gy': '50%' }}
-    >
-      {children}
-    </div>
+    >{children}</div>
   );
 }

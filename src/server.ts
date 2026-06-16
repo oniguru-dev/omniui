@@ -5,14 +5,16 @@
 
 import { Elysia } from 'elysia';
 import { staticPlugin } from '@elysiajs/static';
-import { join } from 'node:path';
-import { readFileSync } from 'fs';
-import { networkInterfaces } from 'os';
 
-import { cwd, pkgRoot, srcRoot } from './libs/paths';
+import { join } from 'node:path';
+import { networkInterfaces } from 'os';
+import { cwd, pkgRoot } from './libs/paths';
 
 const PKG_DIR = pkgRoot();
-const VERSION = JSON.parse(readFileSync(join(PKG_DIR, 'package.json'), 'utf-8')).version;
+
+const VERSION = JSON.parse(await Bun.file(
+  join(PKG_DIR, 'package.json') // package.json
+).text()).version;
 
 async function resolve(name: string): Promise<string> {
   const user = join(cwd, name);
@@ -43,36 +45,37 @@ export async function main() {
     seed: { value: 'this.framework' }
   })
 
-  .onAfterHandle(({ response, set }) => {
-    set('X-Content-Type-Options', 'nosniff');
-    set('X-Frame-Options', 'DENY');
-    set('X-XSS-Protection', '1; mode=block');
-    set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  .onAfterHandle(({ set }) => {
+    Object.assign(set.headers, {
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'X-XSS-Protection': '1; mode=block',
+      'Referrer-Policy': 'strict-origin-when-cross-origin'
+    });
   })
 
   .post('/_bun/rsc', async ({ body, status }) => {
     try {
-      const { module: modulePath, function: functionName, args } = body as {
-        module: string; function: string; args: any[];
-      };
+      const { id, args } = body as { id: string; args: any[] };
 
-      if (!modulePath || typeof modulePath !== 'string')
-        return status(400, { error: 'Invalid module path' });
-      if (modulePath.includes('..') || modulePath.startsWith('/') || modulePath.includes(':'))
-        return status(400, { error: 'Invalid module path' });
+      if (!id || typeof id !== 'string')
+        return status(400, { error: 'Invalid id' });
 
-      const resolvedPath = join(process.cwd(), modulePath);
-      const appDir = join(process.cwd(), 'app');
-      if (!resolvedPath.startsWith(appDir))
+      const colonIdx = id.indexOf(':');
+      if (colonIdx === -1)
+        return status(400, { error: 'Invalid id format' });
+
+      const modulePath = id.slice(0, colonIdx);
+      const functionName = id.slice(colonIdx + 1);
+
+      if (!modulePath.startsWith('app/') || modulePath.includes('..'))
         return status(403, { error: 'Access denied' });
 
       if (!functionName || !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(functionName))
         return status(400, { error: 'Invalid function name' });
 
+      const resolvedPath = join(process.cwd(), modulePath);
       const mod = await import(resolvedPath);
-      if (typeof mod[functionName] !== 'function')
-        return status(400, { error: `Function '${functionName}' not found` });
-
       const result = await mod[functionName](...args);
       return { result };
     } catch (err: any) {
@@ -81,12 +84,13 @@ export async function main() {
     }
   })
 
-  // Load user's api routes
+  // api routes
   const api = join(cwd, 'app', 'api.routes.ts');
 
   if (await Bun.file(api).exists()) {
     const mod = await import(api);
-    if (mod.default) app.use(mod.default);
+    const plugin = mod.default;
+    if (plugin) app.use(plugin);
   }
 
   // routes

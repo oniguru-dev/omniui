@@ -1,48 +1,16 @@
-/** @jsxImportSource preact */
-import { type JSX, type ComponentChildren } from 'preact';
+import type { JSX, ComponentChildren } from 'preact';
 import { useRef, useEffect } from 'preact/hooks';
 
-interface GradientProps {
-  children: ComponentChildren;
-  class?: string;
-  target?: string;
-}
-
-export function Gradient({ children, class: className = '', target }: GradientProps): JSX.Element {
+export function Gradient({ children, class: className = '', target }: {
+  children: ComponentChildren; class?: string; target?: string;
+}): JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!document.getElementById('gradient-style')) {
-      const style = document.createElement('style');
-      style.id = 'gradient-style'; style.textContent = `
-.gradient-root {
-  position: relative;
-  overflow: hidden;
-}
-.gradient-root::before {
-  content: '';
-  position: absolute;
-  width: 300px;
-  height: 300px;
-  left: calc(var(--gx, 50%) - 150px);
-  top: calc(var(--gy, 50%) - 150px);
-  background: radial-gradient(
-    circle,
-    rgba(128, 64, 255, 0.3) 0%,
-    rgba(128, 64, 255, 0.1) 30%,
-    transparent 70%
-  );
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-  transition: left 0.12s ease-out, top 0.12s ease-out;
-}
-.gradient-root > * {
-  position: relative;
-  z-index: 1;
-}`;
-
-      document.head.appendChild(style);
+      const s = document.createElement('style');
+      s.id = 'gradient-style'; s.textContent = `.gradient-root{position:relative;overflow:hidden}.gradient-root::before{content:'';position:absolute;width:300px;height:300px;left:calc(var(--gx,50%) - 150px);top:calc(var(--gy,50%) - 150px);background:radial-gradient(circle,rgba(128,64,255,.3) 0%,rgba(128,64,255,.1) 30%,transparent 70%);border-radius:50%;pointer-events:none;z-index:0;transition:left .12s ease-out,top .12s ease-out}.gradient-root>*{position:relative;z-index:1}`;
+      document.head.appendChild(s);
     }
 
     const element: HTMLElement | null = target
@@ -63,11 +31,11 @@ export function Gradient({ children, class: className = '', target }: GradientPr
       root.style.setProperty('--gx', `${pos.x}%`);
       root.style.setProperty('--gy', `${pos.y}%`);
 
-      if (Math.abs(pos.x - tgt.x) > 0.05 || Math.abs(pos.y - tgt.y) > 0.05) {
-        raf = requestAnimationFrame(animate);
-      } else {
-        raf = null;
-      }
+      if (Math.abs(pos.x - tgt.x) > 0.05
+        || Math.abs(pos.y - tgt.y) > 0.05
+      ) raf = requestAnimationFrame(animate);
+
+      else raf = null;
     };
 
     const onMove = (e: MouseEvent) => {
@@ -102,11 +70,8 @@ export function Gradient({ children, class: className = '', target }: GradientPr
   }, [target]);
 
   return (
-    <div
+    <div style={{ '--gx': '50%', '--gy': '50%' }}
       ref={ref} class={`gradient-root ${className}`}
-      style={{ '--gx': '50%', '--gy': '50%' }}
-    >
-      {children}
-    </div>
+    >{children}</div>
   );
 }

@@ -47,12 +47,11 @@ renderer.table = function (token: any) {
 
 marked.use({ renderer });
 
-function sanitizeHtml(html: string): string {
-  return html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
-    .replace(/\son[a-z]+=(["'])(?:(?!\1).)*?\1/gi, ' ')
-    .replace(/\son[a-z]+=\S+/gi, '');
+function sanitizeHtml(html: string): string { return html
+  .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+  .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+  .replace(/\son[a-z]+=(["'])(?:(?!\1).)*?\1/gi, ' ')
+  .replace(/\son[a-z]+=\S+/gi, '');
 }
 
 const PROSE = [
@@ -94,16 +93,15 @@ export default function Page({ params }: any) {
     </div>
   );
 
-  const slug = params.slug || 'introduction';
-  const doc = data.docs[slug];
+  const slug = params.slug || 'introduction'; const doc = data.docs[slug];
   const html = doc ? sanitizeHtml(marked.parse(doc.content) as string) : '';
 
   const meta = doc?.meta || {};
-  const fmtDate = (d: string) => {
-    if (!d) return '';
-    const [y, m, day] = d.split('-');
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return `${Number(day)} ${months[Number(m)-1]} ${y}`;
+
+  const fmtDate = (date: string) => {
+    if (!date) return ''; const [y, m, day] = date.split('-'); const months = [
+      'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'
+    ]; return `${Number(day)} ${months[Number(m)-1]} ${y}`;
   };
 
   // sidebar

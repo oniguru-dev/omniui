@@ -1,4 +1,5 @@
 declare module 'virtual:uno.css';
+declare module '*.css';
 
 declare module 'virtual:routes' {
   import type { FunctionComponent } from 'preact';

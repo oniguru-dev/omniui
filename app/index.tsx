@@ -4,6 +4,7 @@
  */
 
 import 'virtual:uno.css';
+import './theme.css';
 import { pages, layouts } from 'virtual:routes';
 
 import { render } from "preact";
@@ -13,8 +14,8 @@ import { Router, Route, Switch, useLocation } from 'wouter-preact';
 import FallbackPage from "./_static/Fallback";
 import Fault from './_static/Fault';
 
-import { ErrorBoundary, PageLoader, PageLoaderSignal } from "../src";
-import { AlertProvider } from "../public/components/AlertContext";
+import { ErrorBoundary, PageLoader, PageLoaderSignal } from "#/src";
+import { AlertProvider } from "@/components/AlertContext";
 
 function AlwaysOnTop() {
   const [pathName] = useLocation();
