@@ -1,6 +1,6 @@
 {
   "name": "@omnixui/omniui",
-  "version": "1.1.6-hotfix",
+  "version": "1.1.6-hotfix2",
   "description": "Lightweight UI framework for Bun with file routing, server components, and UnoCSS",
   "module": "src/index.ts",
   "type": "module",
