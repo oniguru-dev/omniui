@@ -54,7 +54,7 @@ export async function main() {
 
   .onAfterHandle(({ set, request }) => { Object.assign(set.headers, {
     'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'X-XSS-Protection': '1; mode=block', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+    'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
   }); })
 
   // Error Boundary
@@ -88,8 +88,16 @@ export async function main() {
       if (!functionName || !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(functionName))
         return status(400, { error: 'Invalid function name' });
 
-      const path = join(process.cwd(), modulePath);
-      const module = await import(path);
+      const resolved = join(process.cwd(), modulePath);
+      const root = process.cwd(); // relative to #/
+
+      if (!resolved.startsWith(root))
+        return status(403, { error: 'Access denied' });
+
+      const module = await import(resolved);
+      if (typeof module[functionName] !== 'function')
+        return status(400, { error: 'Function not found' });
+
       const result = await module[functionName](...args);
       return { result };
     } catch (err: any) {

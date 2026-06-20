@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@iconify-json/solar": "^1.2.5",
+    "@iconify/types": "2.0.0",
     "@omnixui/omniui": "^1.0.0",
     "marked": "^18.0.5"
   }

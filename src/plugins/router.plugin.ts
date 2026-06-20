@@ -1,6 +1,7 @@
 import type { BunPlugin } from "bun";
 import { Glob } from "bun";
 import { join } from "path";
+import { getConfig } from "../libs/config";
 
 export const plugin: BunPlugin = {
   name: "virtual-routes", async setup(build) {
@@ -9,6 +10,9 @@ export const plugin: BunPlugin = {
     });
 
     build.onLoad({ filter: /.*/, namespace: "virtual-routes" }, async () => {
+      const config = getConfig();
+      const strictCase = config.routing?.strictCase ?? false;
+
       const pageGlob = new Glob("**/page.{ts,tsx}");
       const layoutGlob = new Glob("**/layout.{ts,tsx}");
       const imports: string[] = []; const layouts: string[] = [];
@@ -20,7 +24,8 @@ export const plugin: BunPlugin = {
         const segments = file.replace(/\\/g, '/').split('/');
         if (segments.slice(0, -1).some(s => s.startsWith('_'))) continue;
 
-        let route = ("/" + file.replace(/\\/g, "/")).toLowerCase();
+        let route = "/" + file.replace(/\\/g, "/");
+        if (!strictCase) route = route.toLowerCase();
         route = route.replace(/\/?page\.(ts|tsx)$/, "");
         if (route === "") route = "/";
 
@@ -39,13 +44,22 @@ export const plugin: BunPlugin = {
         const segments = file.replace(/\\/g, '/').split('/');
         if (segments.slice(0, -1).some(s => s.startsWith('_'))) continue;
 
-        let route = ("/" + file.replace(/\\/g, "/")).toLowerCase();
+        let route = "/" + file.replace(/\\/g, "/");
+        if (!strictCase) route = route.toLowerCase();
         route = route.replace(/\/?layout\.(ts|tsx)$/, "");
         if (route === "") route = "/";
 
         const path = `./app/${file.replace(/\\/g, "/")}`;
         layouts.push(` "${route}": () => import("${path}")`);
       }
+
+      const func = strictCase ? `
+export function route(path) {
+  return path;
+}` : `
+export function route(path) {
+  return path.toLowerCase();
+}`;
 
       const contents = `
 export const pages = {
@@ -54,7 +68,7 @@ ${imports.join(",\n")}
 
 export const layouts = {
 ${layouts.join(",\n")}
-};
+};${func}
       `.trim();
 
       return { contents, loader: "js" };

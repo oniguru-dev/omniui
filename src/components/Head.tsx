@@ -1,7 +1,13 @@
-export function Head({ title, description, image, url, type, robots }: {
-  title?: string; description?: string; image?: string;
-  url?: string; type?: string; robots?: string;
-}) {
+export interface HeadProps {
+  title?: string;
+  description?: string;
+  image?: string;
+  url?: string;
+  type?: string;
+  robots?: string;
+}
+
+export function Head({ title, description, image, url, type, robots }: HeadProps) {
   if (typeof document === 'undefined') return null;
   if (title) document.title = title;
 

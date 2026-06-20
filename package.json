@@ -1,6 +1,6 @@
 {
   "name": "@omnixui/omniui",
-  "version": "1.1.6-hotfix2",
+  "version": "1.1.7",
   "description": "Lightweight UI framework for Bun with file routing, server components, and UnoCSS",
   "module": "src/index.ts",
   "type": "module",
@@ -18,7 +18,8 @@
     "public/",
     "template/",
     "types.d.ts",
-    "bunfig.toml"
+    "bunfig.toml",
+    "README.md"
   ],
   "scripts": {
     "dev": "bun --watch src/server",
@@ -27,17 +28,17 @@
   },
   "dependencies": {
     "@elysiajs/static": "^1.4.10",
-    "elysia": "^1.4.28",
+    "elysia": "^1.4.29",
     "elysia-rate-limit": "^4.6.2",
-    "fflate": "^0.8.2",
+    "fflate": "^0.8.3",
     "lightningcss": "^1.32.0",
     "lottie-web": "^5.13.0",
     "preact": "^10.29.2",
-    "unocss": "^66.7.0",
+    "unocss": "^66.7.2",
     "wouter-preact": "^3.10.0"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.9.3"
   },
   "keywords": [
     "bun",
@@ -48,5 +49,9 @@
     "ssr",
     "routing"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "resolutions": {
+    "oxc-parser": ">=0.131.0",
+    "@emnapi/core": ">=1.10.0"
+  }
 }

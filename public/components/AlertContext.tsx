@@ -1,6 +1,7 @@
 import { createContext } from 'preact';
 import { useContext, useState } from 'preact/hooks';
 import { Alert, AlertTitle, AlertDescription } from '@/components/Alert';
+import type { ComponentChildren } from 'preact';
 
 interface AlertItem {
   id: string; variant: 'default' | 'warning' | 'danger' | 'success';
@@ -15,7 +16,11 @@ const AlertContext = createContext<AlertContextType>({
   addAlert: () => {}
 });
 
-export function AlertProvider({ children }: { children: any }) {
+export interface AlertProviderProps {
+  children: ComponentChildren;
+}
+
+export function AlertProvider({ children }: AlertProviderProps) {
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
 
   const addAlert = (alert: Omit<AlertItem, 'id'>) => {

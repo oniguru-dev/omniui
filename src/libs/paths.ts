@@ -28,10 +28,3 @@ export function pkgRoot(): string {
   _pkgRoot = join(srcRoot, '..');
   return _pkgRoot;
 }
-
-export function resolve(name: string): string {
-  const user = join(cwd, name);
-  if (existsSync(user)) return user;
-  const pkg = join(pkgRoot(), name);
-  return existsSync(pkg) ? pkg : user;
-}
