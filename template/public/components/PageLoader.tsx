@@ -14,6 +14,12 @@ export function PageLoaderSignal() {
   return null;
 }
 
+export interface PageLoaderProps {
+  children: ComponentChildren;
+  fallback?: ComponentChildren;
+  duration?: number;
+}
+
 interface OverlayProps {
   children: ComponentChildren;
   fallback: ComponentChildren;
@@ -65,11 +71,7 @@ class Overlay extends Component<OverlayProps, OverlayState> {
 export function PageLoader({
   children, fallback,
   duration = 1000,
-}: {
-  children: ComponentChildren;
-  fallback?: ComponentChildren;
-  duration?: number;
-}) {
+}: PageLoaderProps) {
   return (
     <Overlay fallback={fallback} duration={duration}>
       {children}

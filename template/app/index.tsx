@@ -5,11 +5,16 @@
 
 import 'virtual:uno.css';
 import './theme.css';
-import { pages, layouts } from 'virtual:routes';
+import { pages, layouts, route } from 'virtual:routes';
 
 import { render } from "preact";
 import { Suspense, lazy, useLayoutEffect } from "preact/compat";
-import { Router, Route, Switch, useLocation } from 'wouter-preact';
+import { Router, Route, Switch, useLocation as useWouterLocation } from 'wouter-preact';
+
+function useLocation() {
+  const [location, setLocation] = useWouterLocation();
+  return [route ? route(location) : location, setLocation] as const;
+}
 
 import FallbackPage from "./_static/Fallback";
 import Fault from './_static/Fault';
@@ -18,27 +23,27 @@ import { ErrorBoundary, PageLoader, PageLoaderSignal } from "@omnixui/omniui";
 import { AlertProvider } from "@/components/AlertContext";
 
 function AlwaysOnTop() {
-  const [pathName] = useLocation();
+  const [location] = useLocation();
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
-  }, [pathName]);
+  }, [location]);
 
   return null;
 }
 
 // Layouts
 
-function getLayoutChain(pathname: string): string[] {
-  const chains: string[] = [];
-  const parts = pathname.split('/').filter(Boolean);
+function getLayoutChain(path: string): string[] {
+  const chains: string[] = []; // chains of layouts
+  const parts = path.split('/').filter(Boolean);
 
   let current = '';
+
   for (const part of parts) {
     current += '/' + part;
-    if (layouts[current]) {
+    if (layouts[current])
       chains.push(current);
-    }
   }
 
   return chains;
@@ -47,14 +52,17 @@ function getLayoutChain(pathname: string): string[] {
 const layoutCache = new Map<string, any>();
 
 function getLayoutComponent(path: string) {
-  if (!layoutCache.has(path))
+  if (!layoutCache.has(path)) // lazy load
     layoutCache.set(path, lazy(layouts[path]!));
   return layoutCache.get(path);
 }
 
 function LayoutRenderer({ children }: { children: any }) {
   const [location] = useLocation();
-  const layoutChain = getLayoutChain(location);
+  const chain = route ? route(location) : location;
+  const layoutChain = getLayoutChain(chain);
+
+  // render layout chain
 
   let content = children;
 
@@ -69,7 +77,7 @@ function LayoutRenderer({ children }: { children: any }) {
 // Router
 
 render(
-  <ErrorBoundary fallback={(error, dismiss) =>
+  <ErrorBoundary fallback={(error: Error, dismiss: () => void) =>
     <Fault error={error} dismiss={dismiss} />
   }><Router><AlwaysOnTop />
     <PageLoader fallback={<FallbackPage />}>

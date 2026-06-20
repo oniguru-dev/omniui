@@ -9,9 +9,10 @@ async function getLottieData(path: string) {
   return JSON.parse(new TextDecoder().decode(data));
 }
 
-interface StickerProps {
-  src: string, loop?: boolean,
-  class?: string
+export interface StickerProps {
+  src: string;
+  loop?: boolean;
+  class?: string;
 }
 
 export function Sticker({
@@ -40,5 +41,5 @@ export function Sticker({
     };
   }, [src, loop]);
 
-  return <div ref={containerRef} class={className} />
+  return <div ref={containerRef} class={className} role="img" aria-label="Animated sticker" />
 }

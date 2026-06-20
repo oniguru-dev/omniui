@@ -1,15 +1,15 @@
 import { Component, type ComponentChildren } from 'preact';
 
-interface Props {
-  children: ComponentChildren; fallback?: | ComponentChildren
-    | ((error: Error, dismiss: () => void) => ComponentChildren);
+export interface ErrorBoundaryProps {
+  children: ComponentChildren;
+  fallback?: ComponentChildren | ((error: Error, dismiss: () => void) => ComponentChildren);
 }
 
 interface State {
   error: Error | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, State> {
   override state: State = { error: null };
 
   static override getDerivedStateFromError(error: Error): State {

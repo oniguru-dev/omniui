@@ -7,7 +7,7 @@ import fs from "node:fs/promises";
 import { join } from "node:path";
 import { red, yellow, green } from "colorette";
 
-import { pkgRoot, resolve } from '../libs/paths';
+import { pkgRoot, source } from '../libs/paths';
 import { getConfig } from '../libs/config';
 
 // plugins
@@ -77,7 +77,7 @@ try {
   console.log(yellow("⚡ Building backend... [2/2]"));
 
   const server = await Bun.build({
-    entrypoints: [join(cwd, 'src/server.ts')], outdir: join(cwd, 'dist/src'),
+    entrypoints: [join(source, 'server.ts')], outdir: join(cwd, 'dist/src'),
     minify: { whitespace: true, syntax: true }, target: 'bun', format: 'cjs',
     define: { "__bundle__": "true" },
   })

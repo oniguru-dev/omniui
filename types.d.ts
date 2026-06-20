@@ -10,4 +10,5 @@ declare module 'virtual:routes' {
   export const layouts: Record<string, () =>
     Promise<{ default: FunctionComponent<any>; }>
   >;
+  export function route(path: string): string;
 }

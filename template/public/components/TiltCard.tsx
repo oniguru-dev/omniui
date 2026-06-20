@@ -1,9 +1,12 @@
 import type { JSX, ComponentChildren } from 'preact';
 import { useRef } from 'preact/hooks';
 
-export function TiltCard({ children, class: className = '' }:
-  { children: ComponentChildren; class?: string }
-): JSX.Element {
+export interface TiltCardProps {
+  children: ComponentChildren;
+  class?: string;
+}
+
+export function TiltCard({ children, class: className = '' }: TiltCardProps): JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
   const raf = useRef(0); // requestAnimationFrame
 
@@ -36,6 +39,7 @@ export function TiltCard({ children, class: className = '' }:
   return (
     <div class={`will-change-transform ${className}`}
       ref={ref} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}
+      role="group" aria-label="Interactive tilt card"
     >{children}</div>
   );
 };

@@ -9,9 +9,13 @@ interface ItemState {
   speed: number;
 }
 
-export function FollowField({ id, class: className = '', children }: {
-  id?: string; class?: string; children: ComponentChildren;
-}): JSX.Element {
+export interface FollowFieldProps {
+  id?: string;
+  class?: string;
+  children: ComponentChildren;
+}
+
+export function FollowField({ id, class: className = '', children }: FollowFieldProps): JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -130,5 +134,6 @@ export function FollowField({ id, class: className = '', children }: {
 
   return <div style={{ position: 'relative' }}
     ref={ref} id={id} class={className}
+    role="group" aria-label="Interactive magnetic field"
   >{children}</div>;
 }
