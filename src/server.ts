@@ -11,7 +11,6 @@ import { join } from 'node:path';
 import { networkInterfaces } from 'os';
 import { cwd, pkgRoot } from './libs/paths';
 import { getConfig } from './libs/config';
-import { getTranslations, detectLocale, type I18nConfig } from './libs/i18n';
 
 function getIp(req: any): string {
   return req.headers?.get?.('x-forwarded-for')?.split(',')[0]?.trim()

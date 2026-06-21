@@ -1,3 +1,8 @@
+/**
+ * omniui — Lightweight UI Framework
+ * Built with Preact & UnoCSS | @omnidev
+ */
+
 import type { JSX, ComponentChildren } from 'preact';
 import { useRef, useEffect } from 'preact/hooks';
 

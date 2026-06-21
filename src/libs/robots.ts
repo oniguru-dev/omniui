@@ -44,6 +44,6 @@ Sitemap: ${baseUrl}/sitemap.xml
   }
 
   const path = join(output, 'robots.txt');
-  await Bun.write(path, robots);  
+  await Bun.write(path, robots);
   return { path, content: robots };
 }

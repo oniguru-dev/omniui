@@ -1,3 +1,8 @@
+/**
+ * omniui — Lightweight UI Framework
+ * Built with Preact & UnoCSS | @omnidev
+ */
+
 import type { BunPlugin } from "bun";
 import { Glob } from "bun";
 import { join } from "path";

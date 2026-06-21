@@ -1,3 +1,8 @@
+/**
+ * omniui — Lightweight UI Framework
+ * Built with Preact & UnoCSS | @omnidev
+ */
+
 export interface HeadProps {
   title?: string;
   description?: string;

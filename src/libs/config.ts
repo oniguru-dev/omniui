@@ -1,3 +1,8 @@
+/**
+ * omniui — Lightweight UI Framework
+ * Built with Preact & UnoCSS | @omnidev
+ */
+
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 

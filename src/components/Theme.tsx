@@ -1,3 +1,8 @@
+/**
+ * omniui — Lightweight UI Framework
+ * Built with Preact & UnoCSS | @omnidev
+ */
+
 import { useState, useEffect } from "preact/hooks";
 
 function getTheme(): string {

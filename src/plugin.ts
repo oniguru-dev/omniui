@@ -1,3 +1,8 @@
+/**
+ * omniui — Lightweight UI Framework
+ * Built with Preact & UnoCSS | @omnidev
+ */
+
 import type { BunPlugin } from "bun";
 
 import { plugin as router } from './plugins/router.plugin';

@@ -1,3 +1,8 @@
+/**
+ * omniui — Lightweight UI Framework
+ * Built with Preact & UnoCSS | @omnidev
+ */
+
 import { createContext } from 'preact';
 import { useContext, useState } from 'preact/hooks';
 import { Alert, AlertTitle, AlertDescription } from '@/components/Alert';

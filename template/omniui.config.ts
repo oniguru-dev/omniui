@@ -12,6 +12,12 @@ const config = {
   local: false,
   browser: true,
 
+  rateLimit: {
+    max: 127,
+    duration: 60000,
+    paths: {}
+  },
+
   robots: {
     crawler: 2,
     disallow: [ "/api/*" ],
@@ -19,7 +25,7 @@ const config = {
   },
 
   routing: {
-    strictCase: false,
+    strictCase: false
   },
 
   i18n: {

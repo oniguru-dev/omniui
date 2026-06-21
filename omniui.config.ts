@@ -1,8 +1,8 @@
 /**
  * omniui — Lightweight UI Framework
  * Built with Preact & UnoCSS | @omnidev
- * 
- * Configuration file. 
+ *
+ * Configuration file.
  */
 
 const config = {
@@ -12,18 +12,26 @@ const config = {
   local: false,
   browser: true,
 
+  rateLimit: {
+    max: 127,
+    duration: 60000,
+    paths: {}
+  },
+
   robots: {
     crawler: 2,
     disallow: [ "/api/*" ],
     ignore: [ "/api/*" ]
   },
 
-  rateLimit: {
-    max: 127,
-    duration: 60000,
-    routes: {
-      "/_bun/rsc": { max: 15, duration: 60000 }
-    }
+  routing: {
+    strictCase: false
+  },
+
+  i18n: {
+    defaultLocale: "en",
+    locales: ["en", "ru"],
+    cookie: "locale",
   },
 };
 

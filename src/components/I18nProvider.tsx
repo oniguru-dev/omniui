@@ -1,3 +1,8 @@
+/**
+ * omniui — Lightweight UI Framework
+ * Built with Preact & UnoCSS | @omnidev
+ */
+
 import type { ComponentChildren } from 'preact';
 import { useMemo } from 'preact/hooks';
 import { I18nContext } from './I18n';

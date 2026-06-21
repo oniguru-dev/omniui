@@ -1,3 +1,8 @@
+/**
+ * omniui — Lightweight UI Framework
+ * Built with Preact & UnoCSS | @omnidev
+ */
+
 import type { JSX } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import lottie, { type AnimationItem } from 'lottie-web';

@@ -1,3 +1,8 @@
+/**
+ * omniui — Lightweight UI Framework
+ * Built with Preact & UnoCSS | @omnidev
+ */
+
 import { useState, useRef, useEffect } from 'preact/hooks';
 import type { ComponentChildren, HTMLAttributes, TargetedTouchEvent } from 'preact';
 import { LiquidGlass } from "@/components/LiquidGlass";

@@ -1,3 +1,8 @@
+/**
+ * omniui — Lightweight UI Framework
+ * Built with Preact & UnoCSS | @omnidev
+ */
+
 import type { JSX, HTMLAttributes, ComponentChildren } from 'preact';
 
 export interface LiquidGlassProps
