@@ -46,6 +46,9 @@ function getLayoutChain(path: string): string[] {
       chains.push(current);
   }
 
+  if (layouts['/'] && !chains.includes('/'))
+    chains.unshift('/'); // add root layout
+
   return chains;
 }
 

@@ -5,7 +5,7 @@
 
 import { useState, useRef, useEffect } from 'preact/hooks';
 import type { ComponentChildren, HTMLAttributes, TargetedTouchEvent } from 'preact';
-import { LiquidGlass } from "@/components/LiquidGlass";
+import { LiquidGlass } from "./LiquidGlass";
 
 export interface AlertProps extends Omit<HTMLAttributes<HTMLDivElement>, 'icon'> {
   variant?: 'default' | 'danger' | 'success' | 'warning';

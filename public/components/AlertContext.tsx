@@ -5,7 +5,7 @@
 
 import { createContext } from 'preact';
 import { useContext, useState } from 'preact/hooks';
-import { Alert, AlertTitle, AlertDescription } from '@/components/Alert';
+import { Alert, AlertTitle, AlertDescription } from './Alert';
 import type { ComponentChildren } from 'preact';
 
 interface AlertItem {
