@@ -85,18 +85,20 @@ render(
   }><Router><AlwaysOnTop />
     <PageLoader fallback={<FallbackPage />}>
       <Suspense fallback={null}><PageLoaderSignal />
-        <AlertProvider>
-          <LayoutRenderer><Switch>
-            {Object.entries(pages).map(([path, loader]) => {
-              return <Route key={path} path={path} component={
-                lazy(loader)
-              } />;
-            })}
-            <Route component={lazy(
-              () => import("./_static/404")
-            )} />
-          </Switch></LayoutRenderer>
-        </AlertProvider>
+        <LayoutRenderer>
+          <AlertProvider>
+            <Switch>
+              {Object.entries(pages).map(([path, loader]) => {
+                return <Route key={path} path={path} component={
+                  lazy(loader)
+                } />;
+              })}
+              <Route component={lazy(
+                () => import("./_static/404")
+              )} />
+            </Switch>
+          </AlertProvider>
+        </LayoutRenderer>
       </Suspense>
     </PageLoader>
   </Router></ErrorBoundary>,

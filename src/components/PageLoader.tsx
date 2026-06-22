@@ -66,6 +66,7 @@ class Overlay extends Component<OverlayProps, OverlayState> {
           "fixed inset-0 z-[9999] pointer-events-none transition-opacity duration-500 ease-in-out "
           + (animate ? 'opacity-0' : 'opacity-100')
         }>{fallback}</div> )}
+
         {children}
       </ctx.Provider>
     );
