@@ -73,30 +73,38 @@ export async function main() {
       const { id, args } = body as { id: string; args: any[] };
 
       if (!id || typeof id !== 'string')
-        return status(400, { error: 'Invalid id' });
+        return status(400, { error: 'Invalid ID' });
+
+      if (id.length > 512)
+        return status(400, { error: 'ID is too long' });
 
       const colonIdx = id.indexOf(':'); if (colonIdx === -1)
-        return status(400, { error: 'Invalid id format' });
+        return status(400, { error: 'Invalid ID format' });
 
       const modulePath = id.slice(0, colonIdx);
       const functionName = id.slice(colonIdx + 1);
 
-      if (!modulePath.startsWith('app/') || modulePath.includes('..'))
+      if (!modulePath.startsWith('app/') || modulePath.includes('..') || modulePath.includes('\0'))
         return status(403, { error: 'Access denied' });
       if (!functionName || !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(functionName))
         return status(400, { error: 'Invalid function name' });
 
       const resolved = join(process.cwd(), modulePath);
-      const root = process.cwd(); // relative to #/
+      const root = process.cwd();
 
       if (!resolved.startsWith(root))
         return status(403, { error: 'Access denied' });
+
+      if (!Array.isArray(args) || args.length > 16)
+        return status(400, { error: 'Invalid args' });
+
+      const parse = JSON.parse(JSON.stringify(args));
 
       const module = await import(resolved);
       if (typeof module[functionName] !== 'function')
         return status(400, { error: 'Function not found' });
 
-      const result = await module[functionName](...args);
+      const result = await module[functionName](...parse);
       return { result };
     } catch (err: any) {
       if (!BUNDLE) console.error('[RSC] Error:', err);
