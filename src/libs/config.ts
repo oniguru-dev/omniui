@@ -9,7 +9,10 @@ import { join } from 'node:path';
 const cache = new Map<string, Record<string, any>>();
 
 function stripComments(code: string): string {
-  return code.replace(/(["'`])(?:(?!\1|\\).|\\.)*\1|\/\/.*|\/\*[\s\S]*?\*\//g, (m, q) => q ? m : '');
+  return code.replace(
+    /(["'`])(?:(?!\1|\\).|\\.)*\1|\/\/.*|\/\*[\s\S]*?\*\//g,
+    (match, query) => query ? match : ''
+  );
 }
 
 export function getConfig(cwd?: string): Record<string, any> {
@@ -24,7 +27,7 @@ export function getConfig(cwd?: string): Record<string, any> {
   if (!match) return {};
 
   try {
-    const obj = new Function('return ' + stripComments(match[1]))();
+    const obj = new Function('return ' + stripComments(match[1]!))();
     cache.set(dir, obj); return obj;
   } catch {
     return {};
