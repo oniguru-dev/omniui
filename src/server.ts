@@ -8,6 +8,7 @@ import { staticPlugin } from '@elysiajs/static';
 import { rateLimit } from 'elysia-rate-limit';
 
 import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { networkInterfaces } from 'os';
 import { cwd, pkgRoot } from './libs/paths';
 import { getConfig } from './libs/config';
@@ -22,13 +23,13 @@ function getIp(req: any): string {
 
 const PKG_DIR = pkgRoot();
 
-const VERSION = JSON.parse(await Bun.file(
-  join(PKG_DIR, 'package.json') // package.json
-).text()).version;
-
 declare const __bundle__: boolean | undefined;
 const BUNDLE = typeof __bundle__ !== "undefined"
   ? __bundle__ : process.env.NODE_ENV === "bundle";
+
+const VERSION = JSON.parse(readFileSync(
+  join(PKG_DIR, 'package.json'), 'utf-8'
+)).version;
 
 export async function main() {
   const config = getConfig();
