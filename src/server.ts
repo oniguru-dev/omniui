@@ -58,12 +58,11 @@ export async function main() {
 
   // Error Boundary
 
-  .onError(({ code, error }) => {
+  .onError(({ code, error, set }) => {
     if (code === 'INTERNAL_SERVER_ERROR') {
-      if (process.env.NODE_ENV !== 'production')
-        console.error('[Server]', error); // logging errors
-      else
-        console.error('[Server]', error?.message || 'unknown');
+      set.status = 500;
+      if (!BUNDLE) console.error('[Server]', error);
+      return { error: 'Internal server error' };
     }
   })
 
@@ -100,10 +99,7 @@ export async function main() {
       const result = await module[functionName](...args);
       return { result };
     } catch (err: any) {
-      if (process.env.NODE_ENV !== 'production')
-        console.error('[RSC] Error:', err); // logging errors
-      else
-        console.error('[RSC] Error:', err?.message || 'unknown');
+      if (!BUNDLE) console.error('[RSC] Error:', err);
 
       return status(500, { error: 'Internal server error' });
     }
@@ -224,9 +220,14 @@ function cleanUPnP() {
   }
 }
 
-process.on('exit', cleanUPnP); // cleanup portproxy on exit
-process.on('SIGTERM', () => { cleanUPnP(); process.exit(0); });
-process.on('SIGINT', () => { cleanUPnP(); process.exit(0); });
+function shutdown() {
+  if (session) { session.stop(); session = null; }
+  cleanUPnP();
+}
+
+process.on('exit', shutdown);
+process.on('SIGTERM', () => { shutdown(); process.exit(0); });
+process.on('SIGINT', () => { shutdown(); process.exit(0); });
 
 async function startServer() {
   if (session) {
@@ -281,7 +282,7 @@ startServer().then(() => {
   process.stdin.setEncoding('utf-8'); process.stdin.on('data', (key: string) => {
     if (key === '\x03') {
       console.log(`\n  ${RED}✕${R}  Exiting server...\n`);
-      process.exit(0);
+      shutdown(); process.exit(0);
     }
 
     switch (key) {
@@ -299,7 +300,7 @@ startServer().then(() => {
         printHelp(); break; // show help
       case 'q':
         console.log(`\n  ${RED}✕${R}  Exiting server...\n`);
-        process.exit(0); break;
+        shutdown(); process.exit(0); break;
     }
   });
 });

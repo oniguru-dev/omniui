@@ -71,7 +71,7 @@ export default function Fault({ error, dismiss }: FaultProps) {
         </div>
 
         <footer class="flex items-center m-4 text-#fafafa88">
-          <div class="flex-1" /> <div>omniui v1.0.0</div>
+          <div class="flex-1" /> <div>powered by omniui</div>
         </footer>
       </div>
     </div>

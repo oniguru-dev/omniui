@@ -34,7 +34,7 @@ interface OverlayState {
 class Overlay extends Component<OverlayProps, OverlayState> {
   override state: OverlayState = { state: true, animate: false };
   private timer: ReturnType<typeof setTimeout> | null = null;
-  private started = Date.now();
+  private monitor = Date.now();
 
   override componentWillUnmount() {
     if (this.timer) clearTimeout(this.timer);
@@ -42,7 +42,7 @@ class Overlay extends Component<OverlayProps, OverlayState> {
 
   onReady = () => {
     if (!this.state.state) return;
-    const elapsed = Date.now() - this.started;
+    const elapsed = Date.now() - this.monitor;
     const remaining = Math.max(0, this.props.duration - elapsed);
 
     this.timer = setTimeout(() => {
@@ -57,11 +57,10 @@ class Overlay extends Component<OverlayProps, OverlayState> {
 
     return (
       <ctx.Provider value={{ ready: this.onReady }}>
-        {state && (
-          <div class={`fixed inset-0 z-[9999] pointer-events-none transition-opacity duration-500 ease-in-out ${animate ? 'opacity-0' : 'opacity-100'}`}>
-            {fallback}
-          </div>
-        )}
+        {state && ( <div class={
+          "fixed inset-0 z-[9999] pointer-events-none transition-opacity duration-500 ease-in-out "
+          + (animate ? 'opacity-0' : 'opacity-100')
+        }>{fallback}</div> )}
         {children}
       </ctx.Provider>
     );

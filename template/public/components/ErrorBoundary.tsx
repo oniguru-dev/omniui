@@ -1,4 +1,4 @@
-import { Component, type ComponentChildren, type VNode } from 'preact';
+import { Component, type ComponentChildren } from 'preact';
 
 export interface ErrorBoundaryProps {
   children: ComponentChildren;
@@ -16,9 +16,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, State> {
     return { error };
   }
 
-  override componentDidCatch(error: Error, errorInfo: any) {
-    console.error('[ErrorBoundary]', error, errorInfo);
-  }
+  override componentDidCatch(error: Error, errorInfo: any) {}
 
   dismiss = () => {
     this.setState({ error: null });

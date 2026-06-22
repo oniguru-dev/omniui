@@ -88,6 +88,11 @@ function cmdCreate(name: string | undefined) {
 let freeze = false;
 let child: ChildProcess | null = null;
 
+function killChild() {
+  if (!child) return;
+  try { child.kill('SIGTERM'); } catch {}
+}
+
 function startDev() {
   child = spawn('bun',
     ['--watch', join(source, 'server.ts')],
@@ -117,14 +122,14 @@ function cmdDev() {
   process.stdin.setRawMode?.(true); process.stdin.resume(); // raw mode
   process.stdin.setEncoding('utf-8'); process.stdin.on('data', (key: string) => {
     if (key === '\x03') {
-      child?.kill('SIGTERM');
-      process.exit(0);
+      console.log(`\n  ${RED}✕${R}  Exiting...\n`);
+      killChild(); process.exit(0);
     }
 
     switch (key) {
       case 'r':
         console.log(`\n  ${YELLOW}↻${R}  Restarting...\n`);
-        freeze = true; child?.kill('SIGTERM'); break;
+        freeze = true; killChild(); break;
       case 'o':
         openBrowser('http://localhost:8080'); break;
       case 'c':
@@ -133,7 +138,7 @@ function cmdDev() {
         printShortcuts(); break;
       case 'q':
         console.log(`\n  ${RED}✕${R}  Exiting...\n`);
-        child?.kill('SIGTERM'); process.exit(0); break;
+        killChild(); process.exit(0); break;
     }
   });
 }
@@ -194,6 +199,9 @@ function cmdStart() {
   child.on('exit', (code) => {
     process.exit(code ?? 1);
   });
+
+  process.on('SIGINT', () => { child.kill(); process.exit(0); });
+  process.on('SIGTERM', () => { child.kill(); process.exit(0); });
 }
 
 // ── preview ──
@@ -228,6 +236,9 @@ function cmdPreview() {
   child.on('exit', (code) => {
     process.exit(code ?? 1);
   });
+
+  process.on('SIGINT', () => { child.kill(); process.exit(0); });
+  process.on('SIGTERM', () => { child.kill(); process.exit(0); });
 }
 
 // ── clean ──
