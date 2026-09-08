@@ -34,6 +34,7 @@
     "fflate": "^0.8.3",
     "lightningcss": "^1.32.0",
     "lottie-web": "^5.13.0",
+    "marked": "^18.0.12",
     "preact": "^10.29.2",
     "unocss": "^66.7.2",
     "wouter-preact": "^3.10.0"
