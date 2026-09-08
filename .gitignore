@@ -32,3 +32,18 @@ dist/tmp/
 # Cache & downloaded
 public/assets/fonts/
 src/bin/
+
+# environment variables
+tokens.json
+sessions
+
+# AI agents
+.fdx
+.mimocode
+.opencode
+.codebase
+.claude
+docs
+
+# misc
+.backup

@@ -8,6 +8,7 @@
 const config = {
   baseUrl: "http://localhost:8080",
   port: 8080,
+  development: false,
   upnp: false,
   local: false,
   browser: true,

@@ -33,10 +33,14 @@ const VERSION = JSON.parse(readFileSync(
 
 export async function main() {
   const config = getConfig();
-
-  const app = new Elysia({ serve: {
+  const serve: Record<string, unknown> = {
     routes: { "/api": false, "/api/*": false }
-  },
+  };
+
+  if (typeof config.development === 'boolean')
+    serve.development = config.development;
+
+  const app = new Elysia({ serve,
     nativeStaticResponse: true,
     precompile: true, aot: true,
     seed: { value: 'this.framework' }
@@ -246,7 +250,7 @@ async function startServer() {
 
   const { app, config } = await main();
   const port = config.port ?? 8080;
-  const host = config.local ? '127.0.0.1' : '0.0.0.0';
+  const host = config.hostname ?? (config.local ? '127.0.0.1' : '0.0.0.0');
 
   session = app.listen({ port, hostname: host });
   localUrl = `http://localhost:${port}`;

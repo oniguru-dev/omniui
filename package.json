@@ -1,6 +1,6 @@
 {
   "name": "@omnixui/omniui",
-  "version": "1.1.11-hotfix2",
+  "version": "1.1.13",
   "description": "Lightweight UI framework for Bun with file routing, server components, and UnoCSS",
   "module": "src/index.ts",
   "type": "module",
@@ -15,7 +15,6 @@
   },
   "files": [
     "src/",
-    "public/",
     "template/",
     "types.d.ts",
     "bunfig.toml",
@@ -30,7 +29,7 @@
     "@elysiajs/static": "^1.4.10",
     "@types/bun": "^1.3.14",
     "@types/node": "^26.0.0",
-    "elysia": "^1.4.29",
+    "elysia": "1.4.29",
     "elysia-rate-limit": "^4.6.2",
     "fflate": "^0.8.3",
     "lightningcss": "^1.32.0",
