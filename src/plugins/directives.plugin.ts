@@ -48,8 +48,10 @@ export const plugin: BunPlugin = {
     build.onLoad({ filter: /\.(ts|tsx)$/, namespace: "file" }, async (args) => {
       const directive = await getDirective(args.path);
 
+      const content = await Bun.file(args.path).text();
+      const loader = args.path.endsWith('.tsx') ? 'tsx' : 'ts';
+
       if (directive === 'server') {
-        const content = await Bun.file(args.path).text();
         const exports: string[] = []; let match; let regexp;
 
         regexp = /export\s+(?:async\s+)?function\s+(\w+)/g;
@@ -60,7 +62,7 @@ export const plugin: BunPlugin = {
         return { contents: generateProxy(args.path, exports), loader: "js" };
       }
 
-      return undefined;
+      return { contents: content, loader };
     });
   }
 };
