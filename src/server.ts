@@ -10,7 +10,7 @@ import { rateLimit } from 'elysia-rate-limit';
 import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { networkInterfaces } from 'os';
-import { cwd, pkgRoot } from './libs/paths';
+import { pkgRoot, projectRoot } from './libs/paths';
 import { getConfig } from './libs/config';
 
 function getIp(req: any): string {
@@ -22,6 +22,7 @@ function getIp(req: any): string {
 // version
 
 const PKG_DIR = pkgRoot();
+const ROOT = projectRoot();
 
 declare const __bundle__: boolean | undefined;
 const BUNDLE = typeof __bundle__ !== "undefined"
@@ -32,7 +33,7 @@ const VERSION = JSON.parse(readFileSync(
 )).version;
 
 export async function main() {
-  const config = getConfig();
+  const config = getConfig(ROOT);
   const serve: Record<string, unknown> = {
     routes: { "/api": false, "/api/*": false }
   };
@@ -94,8 +95,8 @@ export async function main() {
       if (!functionName || !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(functionName))
         return status(400, { error: 'Invalid function name' });
 
-      const resolved = join(process.cwd(), modulePath);
-      const root = process.cwd();
+      const resolved = join(ROOT, modulePath);
+      const root = ROOT;
 
       if (!resolved.startsWith(root))
         return status(403, { error: 'Access denied' });
@@ -120,7 +121,7 @@ export async function main() {
 
   // middleware
 
-  const middleware = join(cwd, 'middleware.ts');
+  const middleware = join(ROOT, 'middleware.ts');
 
   if (await Bun.file(middleware).exists()) {
     const mod = await import(middleware);
@@ -130,7 +131,7 @@ export async function main() {
 
   // api routes
 
-  const api = join(cwd, 'app', 'api.routes.ts');
+  const api = join(ROOT, 'app', 'api.routes.ts');
 
   if (await Bun.file(api).exists()) {
     const mod = await import(api);
@@ -143,7 +144,7 @@ export async function main() {
   let opts;
 
   opts = {
-    assets: join(cwd, 'public'), prefix: '', maxAge: 31536000,
+    assets: join(ROOT, 'public'), prefix: '', maxAge: 31536000,
     directive: 'must-revalidate', alwaysStatic: true
   } as const;
 
@@ -153,7 +154,7 @@ export async function main() {
   );
 
   opts = {
-    assets: join(cwd, 'app'), prefix: '**',
+    assets: join(ROOT, 'app'), prefix: '**',
     indexHTML: true, bunFullstack: true
   } as const;
 

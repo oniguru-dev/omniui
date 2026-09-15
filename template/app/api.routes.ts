@@ -7,15 +7,28 @@
 import { Elysia } from 'elysia';
 
 import { readdir, stat } from 'fs/promises';
-import { join } from 'path';
+import { existsSync } from 'fs';
+import { dirname, join } from 'path';
 
-const DOCS_DIR = join(process.cwd(), 'docs');
+function findRoot(): string {
+  let dir = process.cwd();
+
+  while (true) {
+    if (existsSync(join(dir, 'app', 'index.html'))) return dir;
+    const parent = dirname(dir); // parent directory
+    if (parent === dir) return process.cwd();
+    dir = parent;
+  }
+}
+
+const DOCS_DIR = join(findRoot(), 'docs');
 
 function parseFront(content: string): {
   meta: Record<string, string>; body: string
 } {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
-  if (!match) return { meta: {}, body: content };
+  const raw = content.replace(/^\uFEFF/, '');
+  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+  if (!match) return { meta: {}, body: raw };
 
   const meta: Record<string, string> = {};
 
@@ -48,7 +61,7 @@ async function collectDocs(dir: string, prefix = '') {
         : entry.replace('.md', '');
 
       const title = meta.title || body.split('\n')
-        .find(line => line.startsWith('# '))?.slice(2)
+        .find(line => line.startsWith('# '))?.slice(2).trim()
         || id.replace(/-/g, ' ');
 
       docs[id] = { title, content: body, meta };

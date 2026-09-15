@@ -4,19 +4,26 @@
  */
 
 import type { BunPlugin } from 'bun';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { transform } from 'lightningcss';
 import { createGenerator } from '@unocss/core';
+import { projectRoot } from '../libs/paths';
 
 async function getConfig() {
-  const configPath = join(process.cwd(), 'uno.config.ts');
+  for (const dir of [process.cwd(), projectRoot()]) {
+    if (!existsSync(join(dir, 'uno.config.ts'))) continue;
 
-  try {
-    const mod = await import(configPath);
-    return mod.default || mod;
-  } catch { return {}; }
+    try {
+      const mod = await import(join(dir, 'uno.config.ts'));
+      return mod.default || mod; // module defaults
+    } catch { continue; }
+  }
+
+  return {};
 }
 
+const root = projectRoot();
 const config = await getConfig();
 const generator = await createGenerator(config);
 let cache: Promise<string> | null = null;
@@ -30,8 +37,8 @@ function compile() {
 
     let sources = '';
     for (const glob of globs) {
-      for await (const file of glob.scan())
-        sources += await Bun.file(file).text() + '\n';
+      for await (const file of glob.scan({ cwd: root }))
+        sources += await Bun.file(join(root, file)).text() + '\n';
     }
 
     const { css } = await generator.generate(sources);

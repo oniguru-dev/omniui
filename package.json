@@ -15,6 +15,7 @@
   },
   "files": [
     "src/",
+    "public/",
     "template/",
     "types.d.ts",
     "bunfig.toml",
@@ -39,7 +40,7 @@
     "unocss": "^66.7.2",
     "wouter-preact": "^3.10.0"
   },
-  "peerDependencies": {
+  "devDependencies": {
     "typescript": "^5.9.3"
   },
   "keywords": [

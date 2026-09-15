@@ -7,6 +7,7 @@ import type { BunPlugin } from "bun";
 import { Glob } from "bun";
 import { join } from "path";
 import { getConfig } from "../libs/config";
+import { projectRoot } from "../libs/paths";
 
 export const plugin: BunPlugin = {
   name: "virtual-routes", async setup(build) {
@@ -15,7 +16,7 @@ export const plugin: BunPlugin = {
     });
 
     build.onLoad({ filter: /.*/, namespace: "virtual-routes" }, async () => {
-      const config = getConfig();
+      const root = projectRoot(); const config = getConfig(root);
       const strictCase = config.routing?.strictCase ?? false;
 
       const pageGlob = new Glob("**/page.{ts,tsx}");
@@ -24,7 +25,7 @@ export const plugin: BunPlugin = {
 
       // Scan page files
       for await (const file of pageGlob.scan({
-        cwd: join(process.cwd(), "app"), onlyFiles: true
+        cwd: join(root, "app"), onlyFiles: true
       })) {
         const segments = file.replace(/\\/g, '/').split('/');
         if (segments.slice(0, -1).some(s => s.startsWith('_'))) continue;
@@ -38,13 +39,13 @@ export const plugin: BunPlugin = {
           (_match, path) => `:${path}`
         );
 
-        const path = `./app/${file.replace(/\\/g, "/")}`;
+        const path = join(root, "app", file).replace(/\\/g, "/");
         imports.push(` "${route}": () => import("${path}")`);
       }
 
       // Scan layout files
       for await (const file of layoutGlob.scan({
-        cwd: join(process.cwd(), "app"), onlyFiles: true
+        cwd: join(root, "app"), onlyFiles: true
       })) {
         const segments = file.replace(/\\/g, '/').split('/');
         if (segments.slice(0, -1).some(s => s.startsWith('_'))) continue;
@@ -54,7 +55,7 @@ export const plugin: BunPlugin = {
         route = route.replace(/\/?layout\.(ts|tsx)$/, "");
         if (route === "") route = "/";
 
-        const path = `./app/${file.replace(/\\/g, "/")}`;
+        const path = join(root, "app", file).replace(/\\/g, "/");
         layouts.push(` "${route}": () => import("${path}")`);
       }
 
